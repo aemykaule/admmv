@@ -1,0 +1,17 @@
+# Dependências do Node/Tailwind
+node_modules/
+
+# Arquivos de ambiente e senhas
+.env
+.env.*
+
+# Arquivos temporários
+*.tmp
+*.log
+
+# Configurações do VS Code
+.vscode/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
