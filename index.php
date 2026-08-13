@@ -542,7 +542,7 @@
             <article class="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100">
 
                 <img
-                    src="COLE_O_LINK_DA_FOTO_DOS_ALUNOS_AQUI"
+                    src="./img/informaticaaa.png"
                     alt="Alunos em sala de aula"
                     class="h-52 w-full object-cover"
                 >
