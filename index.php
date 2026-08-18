@@ -27,8 +27,7 @@
                 </span>
 
                 <h1 class="mt-6 text-5xl font-black leading-tight md:text-6xl">
-                    Formação completa em
-                    <span class="text-laranja">Caiobá.</span>
+                    Formação completa em <span class="text-laranja">Caiobá.</span>
                 </h1>
 
                 <p class="mt-6 max-w-xl text-lg leading-8 text-blue-100">
@@ -39,16 +38,11 @@
 
                 <div class="mt-8 flex flex-wrap gap-3">
                     <a
-                        href="#ingresso"
-                        class="rounded-xl bg-laranja px-6 py-3 font-bold transition hover:bg-laranjaEscuro">
-                        Conheça o ingresso
-                    </a>
-
-                    <a
                         href="#escola"
-                        class="rounded-xl border border-white/30 px-6 py-3 font-bold transition hover:bg-white/10">
+                        class="rounded-xl bg-laranja px-6 py-3 font-bold transition hover:bg-laranjaEscuro">
                         Conheça a unidade
                     </a>
+
                 </div>
 
                 <div class="mt-12 grid max-w-xl grid-cols-3 gap-5 border-t border-white/15 pt-6">
