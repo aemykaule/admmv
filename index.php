@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ensino Médio Integrado - Sesc Senac Caiobá</title>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="./js/tailwind.config.js"></script>
 </head>
@@ -27,6 +28,8 @@
                 </span>
 
                 <h1 class="mt-6 text-5xl font-black leading-tight md:text-6xl">
+                    Formação completa em
+                    <span class="text-laranja">Caiobá.</span>
                     Formação completa em <span class="text-laranja">Caiobá.</span>
                 </h1>
 
@@ -38,6 +41,16 @@
 
                 <div class="mt-8 flex flex-wrap gap-3">
                     <a
+                        href="#ingresso"
+                        class="rounded-xl bg-laranja px-6 py-3 font-bold transition hover:bg-laranjaEscuro">
+                        Conheça o ingresso
+                    </a>
+
+                    <a
+                        href="#escola"
+                        class="rounded-xl border border-white/30 px-6 py-3 font-bold transition hover:bg-white/10">
+                        Conheça a unidade
+                    </a>
                         href="#escola"
                         class="rounded-xl bg-laranja px-6 py-3 font-bold transition hover:bg-laranjaEscuro">
                         Conheça a unidade
@@ -330,6 +343,9 @@
 
         <div class="mx-auto max-w-7xl">
 
+
+        <div class="mx-auto max-w-7xl">
+
             <div class="grid items-center gap-12 lg:grid-cols-2">
 
                 <div>
@@ -472,6 +488,38 @@
 
         </div>
     </section>
+
+    <!-- ingresso -->
+    <section id="ingresso" class="bg-azul px-5 py-20 text-white">
+
+        <div class="mx-auto flex max-w-7xl flex-col items-center justify-between gap-8 md:flex-row">
+
+            <div class="max-w-2xl">
+                <span class="text-sm font-bold uppercase tracking-wider text-orange-300">
+                    Processo de ingresso
+                </span>
+
+                <h2 class="mt-3 text-4xl font-black">
+                    Como entrar no Ensino Médio Integrado
+                </h2>
+
+                <p class="mt-5 leading-8 text-blue-100">
+                    As vagas, matrículas e oportunidades de bolsas são divulgadas por editais oficiais
+                    do Sesc PR e do Senac PR. Neste projeto escolar, a página de avaliação funciona como
+                    uma simulação complementar.
+                </p>
+            </div>
+
+            <a
+                href="prova.php"
+                class="shrink-0 rounded-xl bg-laranja px-7 py-4 font-bold transition hover:bg-laranjaEscuro">
+                Fazer avaliação do projeto
+            </a>
+
+        </div>
+    </section>
+
+    <?php include './includes/footer.php'; ?>
 
     <?php include './includes/footer.php'; ?>
 

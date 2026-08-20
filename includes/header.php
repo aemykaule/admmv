@@ -66,6 +66,17 @@
                             stroke-linecap="round"
                             stroke-linejoin="round"
                             d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.5 20.118a7.5 7.5 0 0 1 15 0A17.933 17.933 0 0 0 12 21.75a17.933 17.933 0 0 0-7.5-1.632Z" />
+
+                    </svg>
+
+                </a>
+
+                <a
+                    href="prova.php"
+                    class="rounded-lg bg-laranja px-5 py-2.5 text-sm font-bold text-white transition hover:bg-laranjaEscuro">
+
+                    Fazer Avaliação
+
                     </svg>
                 </a>
 
