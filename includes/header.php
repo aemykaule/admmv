@@ -77,6 +77,7 @@
 
                     Fazer Avaliação
 
+                    </svg>
                 </a>
 
             </div>

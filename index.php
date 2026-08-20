@@ -30,6 +30,7 @@
                 <h1 class="mt-6 text-5xl font-black leading-tight md:text-6xl">
                     Formação completa em
                     <span class="text-laranja">Caiobá.</span>
+                    Formação completa em <span class="text-laranja">Caiobá.</span>
                 </h1>
 
                 <p class="mt-6 max-w-xl text-lg leading-8 text-blue-100">
@@ -50,6 +51,11 @@
                         class="rounded-xl border border-white/30 px-6 py-3 font-bold transition hover:bg-white/10">
                         Conheça a unidade
                     </a>
+                        href="#escola"
+                        class="rounded-xl bg-laranja px-6 py-3 font-bold transition hover:bg-laranjaEscuro">
+                        Conheça a unidade
+                    </a>
+
                 </div>
 
                 <div class="mt-12 grid max-w-xl grid-cols-3 gap-5 border-t border-white/15 pt-6">
@@ -337,6 +343,9 @@
 
         <div class="mx-auto max-w-7xl">
 
+
+        <div class="mx-auto max-w-7xl">
+
             <div class="grid items-center gap-12 lg:grid-cols-2">
 
                 <div>
@@ -509,6 +518,8 @@
 
         </div>
     </section>
+
+    <?php include './includes/footer.php'; ?>
 
     <?php include './includes/footer.php'; ?>
 
