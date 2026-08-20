@@ -489,35 +489,6 @@
         </div>
     </section>
 
-    <!-- ingresso -->
-    <section id="ingresso" class="bg-azul px-5 py-20 text-white">
-
-        <div class="mx-auto flex max-w-7xl flex-col items-center justify-between gap-8 md:flex-row">
-
-            <div class="max-w-2xl">
-                <span class="text-sm font-bold uppercase tracking-wider text-orange-300">
-                    Processo de ingresso
-                </span>
-
-                <h2 class="mt-3 text-4xl font-black">
-                    Como entrar no Ensino Médio Integrado
-                </h2>
-
-                <p class="mt-5 leading-8 text-blue-100">
-                    As vagas, matrículas e oportunidades de bolsas são divulgadas por editais oficiais
-                    do Sesc PR e do Senac PR. Neste projeto escolar, a página de avaliação funciona como
-                    uma simulação complementar.
-                </p>
-            </div>
-
-            <a
-                href="prova.php"
-                class="shrink-0 rounded-xl bg-laranja px-7 py-4 font-bold transition hover:bg-laranjaEscuro">
-                Fazer avaliação do projeto
-            </a>
-
-        </div>
-    </section>
 
     <?php include './includes/footer.php'; ?>
 

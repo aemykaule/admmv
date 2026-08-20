@@ -71,14 +71,7 @@
 
                 </a>
 
-                <a
-                    href="prova.php"
-                    class="rounded-lg bg-laranja px-5 py-2.5 text-sm font-bold text-white transition hover:bg-laranjaEscuro">
 
-                    Fazer Avaliação
-
-                    </svg>
-                </a>
 
             </div>
 
