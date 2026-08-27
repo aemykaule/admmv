@@ -1,6 +1,5 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-
+\e<!DOCTYPE html>
+<html lang="en">
 <head>
 
     <meta charset="UTF-8">
