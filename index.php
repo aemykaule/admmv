@@ -1,4 +1,26 @@
 <!DOCTYPE html>
+<?php 
+// 1. Conecta ao phpMyAdmin
+include './conexao.php'; 
+
+// 2. Processa o envio se o formulário for submetido
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $titulo = mysqli_real_escape_string($conexao, $_POST['titulo']);
+    $categoria = mysqli_real_escape_string($conexao, $_POST['categoria']);
+    $texto = mysqli_real_escape_string($conexao, $_POST['texto']);
+
+    if (!empty($titulo) && !empty($categoria) && !empty($texto)) {
+        $sql = "INSERT INTO feedbacks (titulo, categoria, texto) VALUES ('$titulo', '$categoria', '$texto')";
+        if ($conexao->query($sql) === TRUE) {
+            header("Location: index.php#feedbacks");
+            exit();
+        }
+    }
+}
+
+// 3. Puxa os feedbacks para renderizar na listagem lateral
+$resultado_feedbacks = $conexao->query("SELECT * FROM feedbacks ORDER BY data_criacao DESC");
+?>
 <html lang="pt-BR" class="scroll-smooth">
 
 <head>
@@ -450,7 +472,7 @@
     </section>
 
 
-    <!-- feedbacks anônimos -->
+        <!-- feedbacks anônimos -->
     <section id="feedbacks" class="min-h-[calc(100vh-73px)] flex flex-col justify-center scroll-mt-[73px] bg-white px-5 py-20">
 
         <div class="mx-auto w-full max-w-7xl">
@@ -472,15 +494,19 @@
                         Os feedbacks são exibidos sem identificação do autor.
                     </p>
 
-                    <form class="mt-8 rounded-3xl bg-fundo p-6 shadow-sm ring-1 ring-slate-100 md:p-8">
+                    <!-- Alterado: método POST e destino para o próprio index.php -->
+                    <form action="index.php" method="POST" class="mt-8 rounded-3xl bg-fundo p-6 shadow-sm ring-1 ring-slate-100 md:p-8">
                         <div>
                             <label for="feedback-titulo" class="text-sm font-bold text-azul">
                                 Título do feedback
                             </label>
+                            <!-- Alterado: adicionado o name="titulo" e validação required -->
                             <input
                                 id="feedback-titulo"
+                                name="titulo"
                                 type="text"
                                 maxlength="70"
+                                required
                                 placeholder="Ex.: Uma sugestão para os intervalos"
                                 class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-laranja focus:ring-4 focus:ring-orange-100">
                         </div>
@@ -489,14 +515,16 @@
                             <label for="feedback-categoria" class="text-sm font-bold text-azul">
                                 Categoria
                             </label>
+                            <!-- Alterado: adicionado o name="categoria" e os values em cada option -->
                             <select
                                 id="feedback-categoria"
+                                name="categoria"
                                 class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-laranja focus:ring-4 focus:ring-orange-100">
-                                <option>Ensino</option>
-                                <option>Estrutura</option>
-                                <option>Projetos</option>
-                                <option>Convivência</option>
-                                <option>Sugestão</option>
+                                <option value="Ensino">Ensino</option>
+                                <option value="Estrutura">Estrutura</option>
+                                <option value="Projetos">Projetos</option>
+                                <option value="Convivência">Convivência</option>
+                                <option value="Sugestão">Sugestão</option>
                             </select>
                         </div>
 
@@ -504,32 +532,36 @@
                             <label for="feedback-texto" class="text-sm font-bold text-azul">
                                 Seu feedback
                             </label>
+                            <!-- Alterado: adicionado o name="texto" e validação required -->
                             <textarea
                                 id="feedback-texto"
+                                name="texto"
                                 rows="5"
                                 maxlength="500"
+                                required
                                 placeholder="Escreva sua opinião, sugestão ou experiência..."
                                 class="mt-2 w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 outline-none transition focus:border-laranja focus:ring-4 focus:ring-orange-100"></textarea>
                         </div>
 
                         <div class="mt-5 flex items-start gap-3 rounded-xl bg-white p-4">
                             <div class="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-orange-100 text-laranja">
-                                &#128274;
+                                🔒
                             </div>
                             <p class="text-xs leading-5 text-slate-500">
                                 Sua identidade não será exibida junto ao feedback. Evite colocar dados pessoais na mensagem.
                             </p>
                         </div>
 
+                        <!-- Alterado: tipo alterado para "submit" para disparar a requisição PHP -->
                         <button
-                            type="button"
+                            type="submit"
                             class="mt-6 w-full rounded-xl bg-azul px-6 py-3.5 font-bold text-white transition hover:bg-azul2">
                             Enviar feedback anônimo
                         </button>
                     </form>
                 </div>
 
-                <!-- publicações -->
+                <!-- publicações dinâmicas vindas do phpMyAdmin -->
                 <div>
                     <div class="flex flex-wrap items-end justify-between gap-4 border-b border-slate-200 pb-5">
                         <div>
@@ -547,73 +579,49 @@
                     </div>
 
                     <div class="mt-7 space-y-5">
+                        <?php 
+                        // Loop que percorre e renderiza os feedbacks salvos no banco de dados
+                        if (isset($resultado_feedbacks) && $resultado_feedbacks->num_rows > 0): 
+                            while($row = $resultado_feedbacks->fetch_assoc()): 
+                                // Converte e formata a data armazenada pelo servidor MySQL
+                                $data_formatada = date('d/m/Y H:i', strtotime($row['data_criacao']));
+                                
+                                // Define dinamicamente a cor da tag com base na categoria
+                                $cor_tag = "bg-orange-100 text-laranjaEscuro";
+                                if ($row['categoria'] === 'Ensino') { $cor_tag = "bg-blue-50 text-azul"; }
+                                elseif ($row['categoria'] === 'Estrutura') { $cor_tag = "bg-emerald-50 text-emerald-700"; }
+                        ?>
+                            <article class="group rounded-2xl border border-slate-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg md:p-7">
+                                <div class="flex items-center justify-between gap-4">
+                                    <span class="rounded-full px-3 py-1 text-xs font-bold <?php echo $cor_tag; ?>">
+                                        <?php echo htmlspecialchars($row['categoria']); ?>
+                                    </span>
+                                    <span class="text-xs text-slate-400">Anônimo • <?php echo $data_formatada; ?></span>
+                                </div>
 
-                        <article class="group rounded-2xl border border-slate-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg md:p-7">
-                            <div class="flex items-center justify-between gap-4">
-                                <span class="rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-laranjaEscuro">
-                                    Projetos
-                                </span>
-                                <span class="text-xs text-slate-400">Anônimo • recentemente</span>
+                                <h4 class="mt-5 text-xl font-black text-azul">
+                                    <?php echo htmlspecialchars($row['titulo']); ?>
+                                </h4>
+
+                                <p class="mt-3 leading-7 text-slate-500 whitespace-pre-line">
+                                    <?php echo htmlspecialchars($row['texto']); ?>
+                                </p>
+
+                                <div class="mt-5 border-t border-slate-100 pt-4 text-xs font-semibold text-slate-400">
+                                    Comunidade escolar
+                                </div>
+                            </article>
+                        <?php 
+                            endwhile; 
+                        else: 
+                        ?>
+                            <!-- Card substituto exibido caso a tabela do banco esteja vazia -->
+                            <div class="rounded-2xl border border-dashed border-slate-200 p-10 text-center">
+                                <p class="text-sm italic text-slate-400">
+                                    Nenhum feedback publicado ainda. Seja o primeiro a compartilhar sua experiência!
+                                </p>
                             </div>
-
-                            <h4 class="mt-5 text-xl font-black text-azul">
-                                Mais momentos para apresentar nossos projetos
-                            </h4>
-
-                            <p class="mt-3 leading-7 text-slate-500">
-                                Seria muito legal ter mais momentos durante o ano para mostrar os projetos feitos em sala.
-                                Isso ajuda a conhecer o trabalho das outras turmas e dá mais motivação para caprichar nas atividades.
-                            </p>
-
-                            <div class="mt-5 border-t border-slate-100 pt-4 text-xs font-semibold text-slate-400">
-                                Comunidade escolar
-                            </div>
-                        </article>
-
-                        <article class="group rounded-2xl border border-slate-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg md:p-7">
-                            <div class="flex items-center justify-between gap-4">
-                                <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-azul">
-                                    Ensino
-                                </span>
-                                <span class="text-xs text-slate-400">Anônimo • recentemente</span>
-                            </div>
-
-                            <h4 class="mt-5 text-xl font-black text-azul">
-                                As atividades práticas fazem diferença
-                            </h4>
-
-                            <p class="mt-3 leading-7 text-slate-500">
-                                Gosto quando o conteúdo é trabalhado em projetos ou atividades práticas. Fica mais fácil entender
-                                a matéria e perceber como aquilo pode ser usado fora da sala de aula.
-                            </p>
-
-                            <div class="mt-5 border-t border-slate-100 pt-4 text-xs font-semibold text-slate-400">
-                                Comunidade escolar
-                            </div>
-                        </article>
-
-                        <article class="group rounded-2xl border border-slate-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg md:p-7">
-                            <div class="flex items-center justify-between gap-4">
-                                <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
-                                    Estrutura
-                                </span>
-                                <span class="text-xs text-slate-400">Anônimo • recentemente</span>
-                            </div>
-
-                            <h4 class="mt-5 text-xl font-black text-azul">
-                                Um espaço de estudo nos intervalos
-                            </h4>
-
-                            <p class="mt-3 leading-7 text-slate-500">
-                                Poderia existir um cantinho mais silencioso para estudar ou terminar atividades durante os intervalos.
-                                Seria útil principalmente em semanas de prova e entrega de trabalhos.
-                            </p>
-
-                            <div class="mt-5 border-t border-slate-100 pt-4 text-xs font-semibold text-slate-400">
-                                Comunidade escolar
-                            </div>
-                        </article>
-
+                        <?php endif; ?>
                     </div>
                 </div>
 
