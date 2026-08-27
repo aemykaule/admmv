@@ -30,7 +30,6 @@
                 <h1 class="mt-6 text-5xl font-black leading-tight md:text-6xl">
                     Formação completa em
                     <span class="text-laranja">Caiobá.</span>
-                    Formação completa em <span class="text-laranja">Caiobá.</span>
                 </h1>
 
                 <p class="mt-6 max-w-xl text-lg leading-8 text-blue-100">
@@ -41,16 +40,6 @@
 
                 <div class="mt-8 flex flex-wrap gap-3">
                     <a
-                        href="#ingresso"
-                        class="rounded-xl bg-laranja px-6 py-3 font-bold transition hover:bg-laranjaEscuro">
-                        Conheça o ingresso
-                    </a>
-
-                    <a
-                        href="#escola"
-                        class="rounded-xl border border-white/30 px-6 py-3 font-bold transition hover:bg-white/10">
-                        Conheça a unidade
-                    </a>
                         href="#escola"
                         class="rounded-xl bg-laranja px-6 py-3 font-bold transition hover:bg-laranjaEscuro">
                         Conheça a unidade
@@ -460,34 +449,178 @@
         </div>
     </section>
 
-    <!-- inclusão -->
-    <section id="acessibilidade" class="bg-laranja px-5 py-20 text-white">
 
-        <div class="mx-auto flex max-w-7xl flex-col items-center justify-between gap-8 md:flex-row">
+    <!-- feedbacks anônimos -->
+    <section id="feedbacks" class="min-h-[calc(100vh-73px)] flex flex-col justify-center scroll-mt-[73px] bg-white px-5 py-20">
 
-            <div class="max-w-2xl">
-                <span class="text-sm font-bold uppercase tracking-wider text-orange-100">
-                    Acessibilidade
-                </span>
+        <div class="mx-auto w-full max-w-7xl">
 
-                <h2 class="mt-3 text-4xl font-black">
-                    Educação pensada para todos
-                </h2>
+            <div class="grid items-start gap-12 lg:grid-cols-[0.9fr_1.1fr]">
 
-                <p class="mt-5 leading-8 text-orange-50">
-                    Entre os diferenciais divulgados pelo programa estão a acessibilidade nos espaços
-                    e uma proposta que reconhece cada estudante como sujeito participativo, crítico e criativo.
-                </p>
+                <!-- apresentação e formulário -->
+                <div class="lg:sticky lg:top-28">
+                    <span class="text-sm font-bold uppercase tracking-wider text-laranja">
+                        Voz dos estudantes
+                    </span>
+
+                    <h2 class="mt-3 text-4xl font-black leading-tight text-azul md:text-5xl">
+                        Mural de feedbacks anônimos
+                    </h2>
+
+                    <p class="mt-5 max-w-xl leading-8 text-slate-500">
+                        Um espaço para compartilhar opiniões, sugestões e experiências sobre a rotina escolar.
+                        Os feedbacks são exibidos sem identificação do autor.
+                    </p>
+
+                    <form class="mt-8 rounded-3xl bg-fundo p-6 shadow-sm ring-1 ring-slate-100 md:p-8">
+                        <div>
+                            <label for="feedback-titulo" class="text-sm font-bold text-azul">
+                                Título do feedback
+                            </label>
+                            <input
+                                id="feedback-titulo"
+                                type="text"
+                                maxlength="70"
+                                placeholder="Ex.: Uma sugestão para os intervalos"
+                                class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-laranja focus:ring-4 focus:ring-orange-100">
+                        </div>
+
+                        <div class="mt-5">
+                            <label for="feedback-categoria" class="text-sm font-bold text-azul">
+                                Categoria
+                            </label>
+                            <select
+                                id="feedback-categoria"
+                                class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-laranja focus:ring-4 focus:ring-orange-100">
+                                <option>Ensino</option>
+                                <option>Estrutura</option>
+                                <option>Projetos</option>
+                                <option>Convivência</option>
+                                <option>Sugestão</option>
+                            </select>
+                        </div>
+
+                        <div class="mt-5">
+                            <label for="feedback-texto" class="text-sm font-bold text-azul">
+                                Seu feedback
+                            </label>
+                            <textarea
+                                id="feedback-texto"
+                                rows="5"
+                                maxlength="500"
+                                placeholder="Escreva sua opinião, sugestão ou experiência..."
+                                class="mt-2 w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 outline-none transition focus:border-laranja focus:ring-4 focus:ring-orange-100"></textarea>
+                        </div>
+
+                        <div class="mt-5 flex items-start gap-3 rounded-xl bg-white p-4">
+                            <div class="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-orange-100 text-laranja">
+                                &#128274;
+                            </div>
+                            <p class="text-xs leading-5 text-slate-500">
+                                Sua identidade não será exibida junto ao feedback. Evite colocar dados pessoais na mensagem.
+                            </p>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="mt-6 w-full rounded-xl bg-azul px-6 py-3.5 font-bold text-white transition hover:bg-azul2">
+                            Enviar feedback anônimo
+                        </button>
+                    </form>
+                </div>
+
+                <!-- publicações -->
+                <div>
+                    <div class="flex flex-wrap items-end justify-between gap-4 border-b border-slate-200 pb-5">
+                        <div>
+                            <p class="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
+                                Publicações recentes
+                            </p>
+                            <h3 class="mt-2 text-2xl font-black text-azul">
+                                O que os estudantes estão dizendo
+                            </h3>
+                        </div>
+
+                        <span class="rounded-full bg-fundo px-4 py-2 text-xs font-bold text-slate-500">
+                            Feedbacks anônimos
+                        </span>
+                    </div>
+
+                    <div class="mt-7 space-y-5">
+
+                        <article class="group rounded-2xl border border-slate-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg md:p-7">
+                            <div class="flex items-center justify-between gap-4">
+                                <span class="rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-laranjaEscuro">
+                                    Projetos
+                                </span>
+                                <span class="text-xs text-slate-400">Anônimo • recentemente</span>
+                            </div>
+
+                            <h4 class="mt-5 text-xl font-black text-azul">
+                                Mais momentos para apresentar nossos projetos
+                            </h4>
+
+                            <p class="mt-3 leading-7 text-slate-500">
+                                Seria muito legal ter mais momentos durante o ano para mostrar os projetos feitos em sala.
+                                Isso ajuda a conhecer o trabalho das outras turmas e dá mais motivação para caprichar nas atividades.
+                            </p>
+
+                            <div class="mt-5 border-t border-slate-100 pt-4 text-xs font-semibold text-slate-400">
+                                Comunidade escolar
+                            </div>
+                        </article>
+
+                        <article class="group rounded-2xl border border-slate-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg md:p-7">
+                            <div class="flex items-center justify-between gap-4">
+                                <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-azul">
+                                    Ensino
+                                </span>
+                                <span class="text-xs text-slate-400">Anônimo • recentemente</span>
+                            </div>
+
+                            <h4 class="mt-5 text-xl font-black text-azul">
+                                As atividades práticas fazem diferença
+                            </h4>
+
+                            <p class="mt-3 leading-7 text-slate-500">
+                                Gosto quando o conteúdo é trabalhado em projetos ou atividades práticas. Fica mais fácil entender
+                                a matéria e perceber como aquilo pode ser usado fora da sala de aula.
+                            </p>
+
+                            <div class="mt-5 border-t border-slate-100 pt-4 text-xs font-semibold text-slate-400">
+                                Comunidade escolar
+                            </div>
+                        </article>
+
+                        <article class="group rounded-2xl border border-slate-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg md:p-7">
+                            <div class="flex items-center justify-between gap-4">
+                                <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
+                                    Estrutura
+                                </span>
+                                <span class="text-xs text-slate-400">Anônimo • recentemente</span>
+                            </div>
+
+                            <h4 class="mt-5 text-xl font-black text-azul">
+                                Um espaço de estudo nos intervalos
+                            </h4>
+
+                            <p class="mt-3 leading-7 text-slate-500">
+                                Poderia existir um cantinho mais silencioso para estudar ou terminar atividades durante os intervalos.
+                                Seria útil principalmente em semanas de prova e entrega de trabalhos.
+                            </p>
+
+                            <div class="mt-5 border-t border-slate-100 pt-4 text-xs font-semibold text-slate-400">
+                                Comunidade escolar
+                            </div>
+                        </article>
+
+                    </div>
+                </div>
+
             </div>
-
-            <button
-                onclick="lerTexto()"
-                class="shrink-0 rounded-xl bg-white px-6 py-4 font-bold text-laranjaEscuro transition hover:bg-orange-50">
-                Ouvir conteúdo
-            </button>
-
         </div>
     </section>
+
 
     <?php include './includes/footer.php'; ?>
 
