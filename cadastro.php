@@ -1,11 +1,6 @@
-<<<<<<< HEAD
 <!DOCTYPE html>
 <html lang="pt-BR">
 
-=======
-\e<!DOCTYPE html>
-<html lang="en">
->>>>>>> 3829ae4f8aa21b4d6d3d28b64818950961d5b12a
 <head>
 
     <meta charset="UTF-8">
