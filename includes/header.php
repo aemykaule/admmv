@@ -53,7 +53,7 @@
 
             <button
                 type="button"
-                onclick="abrirConta()"
+                onclick="abrirLogin()"
                 title="Entrar ou cadastrar"
                 aria-label="Entrar ou cadastrar"
                 class="grid h-11 w-11 place-items-center rounded-lg border border-white/20 bg-white/10 text-white transition hover:border-laranja hover:bg-laranja">
