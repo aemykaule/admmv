@@ -487,6 +487,10 @@
 
     <?php include './includes/footer.php'; ?>
 
+<<<<<<< HEAD
+=======
+    <?php include './includes/footer.php'; ?>
+>>>>>>> 3829ae4f8aa21b4d6d3d28b64818950961d5b12a
 
     <!-- libras -->
     <div vw class="enabled">
