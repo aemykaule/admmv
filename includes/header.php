@@ -1,12 +1,12 @@
-<header class="sticky top-0 z-50 border-b border-white/10 bg-amber-500 dark:bg-azul text-white">
+<header class="sticky top-0 z-50 border-b border-white/10 bg-azul text-white">
 
     <div class="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
 
         <!-- LOGO -->
         <a href="index.php" class="flex items-center gap-3">
 
-            <span class="grid  place-items-center text-lg font-black bg-amber-500 ">
-                <img class="h-30 w-[230px]" src="./img/emi-logo.png" alt="Logo EMI">
+            <span class="grid  place-items-center text-lg font-black ">
+                <img class="h-30 w-[230px]" src="./img/natanLucas.png" alt="Logo EMI">
             </span>
 
             <!-- <div>

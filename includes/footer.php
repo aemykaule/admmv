@@ -1,4 +1,4 @@
-    <footer class="bg-amber-500 px-5 py-12 text-white    dark:bg-azul">
+    <footer class="bg-amber-500 px-5 py-12 text-whitebg-azul">
 
         <div class="mx-auto max-w-7xl">
 
@@ -8,8 +8,8 @@
 
                     <div class="flex items-center gap-3 text-white">
 
-                        <span class=" bg-amber-500 rounded-md">
-                            <img class="h-30 w-[px]" src="./img/emi-logo.png" alt="Logo EMI">
+                        <span class=" rounded-md">
+                            <img class="h-30 w-[px]" src="./img/natanLucas.png" alt="Logo EMI">
                         </span>
 
                         <!-- <strong>
