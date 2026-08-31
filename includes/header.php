@@ -231,17 +231,6 @@
             </form>
 
 
-            <p class="mt-5 text-sm text-gray-600">
-
-                Não tem sua conta?
-
-                <a
-                    href="cadastro.php"
-                    class="text-gray-800 underline hover:text-gray-500">
-                    Cadastre-se aqui
-                </a>
-
-            </p>
 
         </div>
 
