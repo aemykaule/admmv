@@ -1,4 +1,4 @@
-    <footer class="bg-[#002D45] px-5 py-12 text-blue-100">
+    <footer class="bg-amber-500 px-5 py-12 text-white    dark:bg-azul">
 
         <div class="mx-auto max-w-7xl">
 
@@ -8,13 +8,13 @@
 
                     <div class="flex items-center gap-3 text-white">
 
-                        <span class="grid h-9 w-9 place-items-center rounded-lg bg-white font-black">
-                            <img src="./img/logo.png" alt="">
+                        <span class=" bg-amber-500 rounded-md">
+                            <img class="h-30 w-[px]" src="./img/emi-logo.png" alt="Logo EMI">
                         </span>
 
-                        <strong>
+                        <!-- <strong>
                             Sesc Senac
-                        </strong>
+                        </strong> -->
 
                     </div>
 

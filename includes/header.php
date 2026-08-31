@@ -1,15 +1,15 @@
-<header class="sticky top-0 z-50 border-b border-white/10 bg-azul text-white">
+<header class="sticky top-0 z-50 border-b border-white/10 bg-amber-500 dark:bg-azul text-white">
 
     <div class="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
 
         <!-- LOGO -->
         <a href="index.php" class="flex items-center gap-3">
 
-            <span class="grid h-10 w-10 place-items-center rounded-lg bg-white text-lg font-black">
-                <img src="./img/logo.png" alt="">
+            <span class="grid  place-items-center text-lg font-black bg-amber-500 ">
+                <img class="h-30 w-[230px]" src="./img/emi-logo.png" alt="Logo EMI">
             </span>
 
-            <div>
+            <!-- <div>
                 <span class="block font-bold leading-none">
                     Sesc Senac
                 </span>
@@ -17,13 +17,13 @@
                 <span class="text-xs text-blue-200">
                     Ensino Médio
                 </span>
-            </div>
+            </div> -->
 
         </a>
 
 
         <!-- MENU -->
-        <nav class="hidden items-center gap-7 text-sm font-medium lg:flex">
+        <nav class="hidden items-center gap-7 text-lg font-medium lg:flex">
 
             <a href="#escola" class="transition hover:text-laranja">
                 A Escola

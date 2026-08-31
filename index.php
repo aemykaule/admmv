@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<?php 
+<?php
 // 1. Conecta ao phpMyAdmin
-include './conexao.php'; 
+include './conexao.php';
 
 // 2. Processa o envio se o formulário for submetido
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -269,7 +269,7 @@ $resultado_feedbacks = $conexao->query("SELECT * FROM feedbacks ORDER BY data_cr
                         <span class="text-xs font-bold uppercase tracking-wider text-laranja">02</span>
                         <h3 class="mt-3 text-xl font-black text-azul">Formação técnica</h3>
                         <p class="mt-3 text-sm leading-7 text-slate-500">
-                        Conteúdos profissionais de Informática para Internet desenvolvidos junto ao percurso do Ensino Médio.
+                            Conteúdos profissionais de Informática para Internet desenvolvidos junto ao percurso do Ensino Médio.
                         </p>
                     </div>
                 </article>
@@ -282,7 +282,7 @@ $resultado_feedbacks = $conexao->query("SELECT * FROM feedbacks ORDER BY data_cr
                         <span class="text-xs font-bold uppercase tracking-wider text-laranja">03</span>
                         <h3 class="mt-3 text-xl font-black text-azul">Metodologias ativas</h3>
                         <p class="mt-3 text-sm leading-7 text-slate-500">
-                        Projetos, atividades interdisciplinares e experiências que colocam o aluno como participante do processo de aprendizagem.
+                            Projetos, atividades interdisciplinares e experiências que colocam o aluno como participante do processo de aprendizagem.
                         </p>
                     </div>
                 </article>
@@ -355,66 +355,74 @@ $resultado_feedbacks = $conexao->query("SELECT * FROM feedbacks ORDER BY data_cr
         <div class="mx-auto max-w-7xl">
 
 
-        <div class="mx-auto max-w-7xl">
+            <div class="mx-auto max-w-7xl">
 
-            <div class="grid items-center gap-12 lg:grid-cols-2">
+                <div class="grid items-center gap-12 lg:grid-cols-2">
 
-                <div>
-                    <span class="text-sm font-bold uppercase tracking-wider text-laranja">
-                        Projetos reais de Caiobá
-                    </span>
+                    <div>
+                        <span class="text-sm font-bold uppercase tracking-wider text-laranja">
+                            Projetos reais de Caiobá
+                        </span>
 
-                    <h2 class="mt-3 text-4xl font-black text-azul">
-                        Ciência, tecnologia e realidade local
-                    </h2>
+                        <h2 class="mt-3 text-4xl font-black text-azul">
+                            Ciência, tecnologia e realidade local
+                        </h2>
 
-                    <p class="mt-5 leading-8 text-slate-500">
-                        Em 2025, estudantes do Sesc Senac Caiobá/Matinhos participaram de feiras e
-                        eventos científicos com trabalhos ligados à tecnologia, história, inclusão,
-                        meio ambiente e cultura regional.
-                    </p>
+                        <p class="mt-5 leading-8 text-slate-500">
+                            Em 2025, estudantes do Sesc Senac Caiobá/Matinhos participaram de feiras e
+                            eventos científicos com trabalhos ligados à tecnologia, história, inclusão,
+                            meio ambiente e cultura regional.
+                        </p>
 
-                    <div class="mt-7 space-y-4">
-                        <div class="border-l-4 border-laranja pl-4">
-                            <h3 class="font-bold text-azul">Inovação e Inclusão</h3>
-                            <p class="mt-1 text-sm leading-6 text-slate-500">
-                                Projeto de modelagem e impressão 3D para acessibilidade em museus,
-                                vencedor do 1º lugar em Tecnologia no Concurso Sementes do Futuro.
-                            </p>
-                        </div>
+                        <div class="mt-7 space-y-4">
+                            <div class="border-l-4 border-laranja pl-4">
+                                <h3 class="font-bold text-azul">Inovação e Inclusão</h3>
+                                <p class="mt-1 text-sm leading-6 text-slate-500">
+                                    Projeto de modelagem e impressão 3D para acessibilidade em museus,
+                                    vencedor do 1º lugar em Tecnologia no Concurso Sementes do Futuro.
+                                </p>
+                            </div>
 
-                        <div class="border-l-4 border-laranja pl-4">
-                            <h3 class="font-bold text-azul">Terra Indígena Yanomami</h3>
-                            <p class="mt-1 text-sm leading-6 text-slate-500">
-                                Pesquisa sobre os impactos do garimpo ilegal, reconhecida com Menção
-                                Honrosa da Funai na FECCI.
-                            </p>
-                        </div>
+                            <div class="border-l-4 border-laranja pl-4">
+                                <h3 class="font-bold text-azul">Terra Indígena Yanomami</h3>
+                                <p class="mt-1 text-sm leading-6 text-slate-500">
+                                    Pesquisa sobre os impactos do garimpo ilegal, reconhecida com Menção
+                                    Honrosa da Funai na FECCI.
+                                </p>
+                            </div>
 
-                        <div class="border-l-4 border-laranja pl-4">
-                            <h3 class="font-bold text-azul">Arqueologia Digital</h3>
-                            <p class="mt-1 text-sm leading-6 text-slate-500">
-                                Trabalho com modelagem e impressão 3D de zoólitos, conectado à história
-                                e ao patrimônio do litoral paranaense.
-                            </p>
+                            <div class="border-l-4 border-laranja pl-4">
+                                <h3 class="font-bold text-azul">Arqueologia Digital</h3>
+                                <p class="mt-1 text-sm leading-6 text-slate-500">
+                                    Trabalho com modelagem e impressão 3D de zoólitos, conectado à história
+                                    e ao patrimônio do litoral paranaense.
+                                </p>
+                            </div>
+
+                            <div class="border-l-4 border-laranja pl-4">
+                                <h3 class="font-bold text-azul">Cinema de Matinhos</h3>
+                                <p class="mt-1 text-sm leading-6 text-slate-500">
+                                    Uma das primeiras pesquisas sobre a história do cinema na cidade, com registro de filmes, cartazes e entrevistas,
+                                    começou aqui.
+                                </p>
+                            </div>
                         </div>
                     </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <img
+                            src="./img/feira-cientifica-sesc-senac.jpg"
+                            alt="Participantes do Sesc Senac em evento científico"
+                            class="h-80 w-full rounded-2xl object-cover">
+
+                        <img
+                            src="./img/sesc-senac-evento-cientifico.jpeg"
+                            alt="Representantes do Sesc e Senac em evento científico"
+                            class="mt-10 h-80 w-full rounded-2xl object-cover">
+                    </div>
+
                 </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <img
-                        src="./img/feira-cientifica-sesc-senac.jpg"
-                        alt="Participantes do Sesc Senac em evento científico"
-                        class="h-80 w-full rounded-2xl object-cover">
-
-                    <img
-                        src="./img/sesc-senac-evento-cientifico.jpeg"
-                        alt="Representantes do Sesc e Senac em evento científico"
-                        class="mt-10 h-80 w-full rounded-2xl object-cover">
-                </div>
-
             </div>
-        </div>
     </section>
 
     <!-- espaços e vivências -->
@@ -472,7 +480,7 @@ $resultado_feedbacks = $conexao->query("SELECT * FROM feedbacks ORDER BY data_cr
     </section>
 
 
-        <!-- feedbacks anônimos -->
+    <!-- feedbacks anônimos -->
     <section id="feedbacks" class="min-h-[calc(100vh-73px)] flex flex-col justify-center scroll-mt-[73px] bg-white px-5 py-20">
 
         <div class="mx-auto w-full max-w-7xl">
@@ -582,42 +590,45 @@ $resultado_feedbacks = $conexao->query("SELECT * FROM feedbacks ORDER BY data_cr
                     </div>
 
                     <div class="mt-7 space-y-5">
-                        <?php 
+                        <?php
                         // Loop que percorre e renderiza os feedbacks salvos no banco de dados
-                        if (isset($resultado_feedbacks) && $resultado_feedbacks->num_rows > 0): 
-                            while($row = $resultado_feedbacks->fetch_assoc()): 
+                        if (isset($resultado_feedbacks) && $resultado_feedbacks->num_rows > 0):
+                            while ($row = $resultado_feedbacks->fetch_assoc()):
                                 // Converte e formata a data armazenada pelo servidor MySQL
                                 $data_formatada = date('d/m/Y H:i', strtotime($row['data_criacao']));
-                                
+
                                 // Define dinamicamente a cor da tag com base na categoria
                                 $cor_tag = "bg-orange-100 text-laranjaEscuro";
-                                if ($row['categoria'] === 'Ensino') { $cor_tag = "bg-blue-50 text-azul"; }
-                                elseif ($row['categoria'] === 'Estrutura') { $cor_tag = "bg-emerald-50 text-emerald-700"; }
+                                if ($row['categoria'] === 'Ensino') {
+                                    $cor_tag = "bg-blue-50 text-azul";
+                                } elseif ($row['categoria'] === 'Estrutura') {
+                                    $cor_tag = "bg-emerald-50 text-emerald-700";
+                                }
                         ?>
-                            <article class="group rounded-2xl border border-slate-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg md:p-7">
-                                <div class="flex items-center justify-between gap-4">
-                                    <span class="rounded-full px-3 py-1 text-xs font-bold <?php echo $cor_tag; ?>">
-                                        <?php echo htmlspecialchars($row['categoria']); ?>
-                                    </span>
-                                    <span class="text-xs text-slate-400">Anônimo • <?php echo $data_formatada; ?></span>
-                                </div>
+                                <article class="group rounded-2xl border border-slate-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg md:p-7">
+                                    <div class="flex items-center justify-between gap-4">
+                                        <span class="rounded-full px-3 py-1 text-xs font-bold <?php echo $cor_tag; ?>">
+                                            <?php echo htmlspecialchars($row['categoria']); ?>
+                                        </span>
+                                        <span class="text-xs text-slate-400">Anônimo • <?php echo $data_formatada; ?></span>
+                                    </div>
 
-                                <h4 class="mt-5 text-xl font-black text-azul">
-                                    <?php echo htmlspecialchars($row['titulo']); ?>
-                                </h4>
+                                    <h4 class="mt-5 text-xl font-black text-azul">
+                                        <?php echo htmlspecialchars($row['titulo']); ?>
+                                    </h4>
 
-                                <p class="mt-3 leading-7 text-slate-500 whitespace-pre-line">
-                                    <?php echo htmlspecialchars($row['texto']); ?>
-                                </p>
+                                    <p class="mt-3 leading-7 text-slate-500 whitespace-pre-line">
+                                        <?php echo htmlspecialchars($row['texto']); ?>
+                                    </p>
 
-                                <div class="mt-5 border-t border-slate-100 pt-4 text-xs font-semibold text-slate-400">
-                                    Comunidade escolar
-                                </div>
-                            </article>
-                        <?php 
-                            endwhile; 
-                        else: 
-                        ?>
+                                    <div class="mt-5 border-t border-slate-100 pt-4 text-xs font-semibold text-slate-400">
+                                        Comunidade escolar
+                                    </div>
+                                </article>
+                            <?php
+                            endwhile;
+                        else:
+                            ?>
                             <!-- Card substituto exibido caso a tabela do banco esteja vazia -->
                             <div class="rounded-2xl border border-dashed border-slate-200 p-10 text-center">
                                 <p class="text-sm italic text-slate-400">
@@ -648,4 +659,5 @@ $resultado_feedbacks = $conexao->query("SELECT * FROM feedbacks ORDER BY data_cr
     <script src="./js/libras.js"></script>
 
 </body>
+
 </html>
