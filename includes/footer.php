@@ -1,4 +1,4 @@
-    <footer class="bg-amber-500 px-5 py-12 text-whitebg-azul">
+    <footer class="px-5 py-12 text-white bg-azul">
 
         <div class="mx-auto max-w-7xl">
 
