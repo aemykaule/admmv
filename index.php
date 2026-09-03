@@ -108,11 +108,57 @@ $resultado_feedbacks = $conexao->query("SELECT * FROM feedbacks ORDER BY data_cr
 
         <div class="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-2">
 
-            <div class="overflow-hidden rounded-2xl shadow-xl">
-                <img
-                    src="./img/iscola.png"
-                    alt="Estudante do Ensino Médio Integrado Sesc Senac em laboratório de informática"
-                    class="h-[420px] w-full object-cover">
+            <div id="carousel-escola" class="group relative overflow-hidden rounded-2xl shadow-xl">
+
+                <!-- slides -->
+                <div class="relative h-[420px]">
+                    <img
+                        src="./img/iscola.png"
+                        alt="Unidade Sesc Senac Caiobá"
+                        class="carousel-slide absolute inset-0 h-full w-full object-cover opacity-100 transition-opacity duration-700">
+
+                    <img
+                        src="./img/esportes.png"
+                        alt="Atividade esportiva no ginásio do Sesc"
+                        class="carousel-slide absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-700">
+
+                    <img
+                        src="./img/formatura.png"
+                        alt="Formatura dos estudantes do Ensino Médio Integrado"
+                        class="carousel-slide absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-700">
+
+                    <img
+                        src="./img/instituicao.png"
+                        alt="Fachada da unidade Sesc Senac"
+                        class="carousel-slide absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-700">
+                </div>
+
+                <!-- seta esquerda -->
+                <button
+                    type="button"
+                    id="carousel-prev"
+                    aria-label="Imagem anterior"
+                    class="absolute left-4 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-black/35 text-2xl text-white opacity-0 backdrop-blur-sm transition hover:bg-black/55 group-hover:opacity-100">
+                    &#10094;
+                </button>
+
+                <!-- seta direita -->
+                <button
+                    type="button"
+                    id="carousel-next"
+                    aria-label="Próxima imagem"
+                    class="absolute right-4 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-black/35 text-2xl text-white opacity-0 backdrop-blur-sm transition hover:bg-black/55 group-hover:opacity-100">
+                    &#10095;
+                </button>
+
+                <!-- indicadores -->
+                <div class="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
+                    <button type="button" aria-label="Ir para imagem 1" class="carousel-dot h-2.5 w-8 rounded-full bg-white transition"></button>
+                    <button type="button" aria-label="Ir para imagem 2" class="carousel-dot h-2.5 w-2.5 rounded-full bg-white/50 transition"></button>
+                    <button type="button" aria-label="Ir para imagem 3" class="carousel-dot h-2.5 w-2.5 rounded-full bg-white/50 transition"></button>
+                    <button type="button" aria-label="Ir para imagem 4" class="carousel-dot h-2.5 w-2.5 rounded-full bg-white/50 transition"></button>
+                </div>
+
             </div>
 
             <div>
@@ -655,8 +701,11 @@ $resultado_feedbacks = $conexao->query("SELECT * FROM feedbacks ORDER BY data_cr
         </div>
     </div>
 
+
     <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+    <script src="./js/carrossel.js"></script>
     <script src="./js/libras.js"></script>
+
 
 </body>
 
