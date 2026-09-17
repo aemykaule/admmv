@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $texto = mysqli_real_escape_string($conexao, $_POST['texto']);
 
     if (!empty($titulo) && !empty($categoria) && !empty($texto)) {
-        $sql = "INSERT INTO feedbacks (titulo, categoria, texto) VALUES ('$titulo', '$categoria', '$texto')";
+        $sql = "INSERT INTO feedbacks (titulo, categoria, texto, status, arquivado) VALUES ('$titulo', '$categoria', '$texto', 'pendente', 0)";
         if ($conexao->query($sql) === TRUE) {
             header("Location: index.php#feedbacks");
             exit();
@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // 3. Puxa os feedbacks para renderizar na listagem lateral
-$resultado_feedbacks = $conexao->query("SELECT * FROM feedbacks ORDER BY data_criacao DESC");
+$resultado_feedbacks = $conexao->query("SELECT * FROM feedbacks WHERE status = 'aprovado' AND arquivado = 0 ORDER BY data_criacao DESC");
 ?>
 <html lang="pt-BR" class="scroll-smooth">
 
@@ -118,17 +118,17 @@ $resultado_feedbacks = $conexao->query("SELECT * FROM feedbacks ORDER BY data_cr
                         class="carousel-slide absolute inset-0 h-full w-full object-cover opacity-100 transition-opacity duration-700">
 
                     <img
-                        src="./img/esportes.png"
+                        src="./img/volei-sesc.png"
                         alt="Atividade esportiva no ginásio do Sesc"
                         class="carousel-slide absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-700">
 
                     <img
-                        src="./img/formatura.png"
+                        src="./img/formatura-sesc.png"
                         alt="Formatura dos estudantes do Ensino Médio Integrado"
                         class="carousel-slide absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-700">
 
                     <img
-                        src="./img/instituicao.png"
+                        src="./img/fachada-sesc.png"
                         alt="Fachada da unidade Sesc Senac"
                         class="carousel-slide absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-700">
                 </div>
@@ -701,11 +701,68 @@ $resultado_feedbacks = $conexao->query("SELECT * FROM feedbacks ORDER BY data_cr
         </div>
     </div>
 
-
     <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
-    <script src="./js/carrossel.js"></script>
     <script src="./js/libras.js"></script>
 
+
+    <!-- carrossel da seção sobre -->
+    <script>
+        const carousel = document.getElementById('carousel-escola');
+        const slides = carousel.querySelectorAll('.carousel-slide');
+        const dots = carousel.querySelectorAll('.carousel-dot');
+        const prevButton = document.getElementById('carousel-prev');
+        const nextButton = document.getElementById('carousel-next');
+
+        let slideAtual = 0;
+        let autoplay;
+
+        function mostrarSlide(indice) {
+            slideAtual = (indice + slides.length) % slides.length;
+
+            slides.forEach((slide, i) => {
+                slide.classList.toggle('opacity-100', i === slideAtual);
+                slide.classList.toggle('opacity-0', i !== slideAtual);
+            });
+
+            dots.forEach((dot, i) => {
+                dot.classList.toggle('w-8', i === slideAtual);
+                dot.classList.toggle('w-2.5', i !== slideAtual);
+                dot.classList.toggle('bg-white', i === slideAtual);
+                dot.classList.toggle('bg-white/50', i !== slideAtual);
+            });
+        }
+
+        function iniciarAutoplay() {
+            autoplay = setInterval(() => mostrarSlide(slideAtual + 1), 4500);
+        }
+
+        function reiniciarAutoplay() {
+            clearInterval(autoplay);
+            iniciarAutoplay();
+        }
+
+        prevButton.addEventListener('click', () => {
+            mostrarSlide(slideAtual - 1);
+            reiniciarAutoplay();
+        });
+
+        nextButton.addEventListener('click', () => {
+            mostrarSlide(slideAtual + 1);
+            reiniciarAutoplay();
+        });
+
+        dots.forEach((dot, i) => {
+            dot.addEventListener('click', () => {
+                mostrarSlide(i);
+                reiniciarAutoplay();
+            });
+        });
+
+        carousel.addEventListener('mouseenter', () => clearInterval(autoplay));
+        carousel.addEventListener('mouseleave', iniciarAutoplay);
+
+        iniciarAutoplay();
+    </script>
 
 </body>
 

@@ -2,38 +2,184 @@
 
 session_start();
 
-// Se já estiver logado, vai direto para a moderação
-if (isset($_SESSION['admin']) && $_SESSION['admin'] === true) {
-    header('Location: moderacao.php');
+
+// verifica se o administrador está logado
+if (
+    !isset($_SESSION['admin']) ||
+    $_SESSION['admin'] !== true
+) {
+
+    header('Location: login.php');
     exit;
+
 }
 
-$erro = '';
 
+// conexão com o banco
+require_once __DIR__ . '/conexao.php';
+
+
+// logout
+if (isset($_GET['sair'])) {
+
+    session_unset();
+    session_destroy();
+
+    header('Location: login.php');
+    exit;
+
+}
+
+
+// filtro atual
+$filtro = $_POST['filtro'] ?? $_GET['filtro'] ?? 'pendente';
+
+$filtrosPermitidos = [
+    'pendente',
+    'aprovado',
+    'recusado'
+];
+
+if (!in_array($filtro, $filtrosPermitidos, true)) {
+    $filtro = 'pendente';
+}
+
+
+// aprovar, recusar ou remover feedback
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-    $usuario = $_POST['usuario'] ?? '';
-    $senha = $_POST['senha'] ?? '';
+    $id = intval($_POST['id'] ?? 0);
+    $acao = $_POST['acao'] ?? '';
 
-    // Login do administrador
-    if ($usuario === 'admin' && $senha === '1234') {
 
-        $_SESSION['admin'] = true;
-        $_SESSION['usuario_admin'] = $usuario;
+    if ($id > 0) {
 
-        header('Location: moderacao.php');
-        exit;
 
-    } else {
+        // aprovar
+        if ($acao === 'aprovar') {
 
-        $erro = 'Usuário ou senha incorretos.';
+            $stmt = $conexao->prepare(
+                "UPDATE feedbacks
+                 SET status = 'aprovado'
+                 WHERE id = ?"
+            );
+
+            $stmt->bind_param('i', $id);
+            $stmt->execute();
+            $stmt->close();
+
+            header(
+                'Location: moderacao.php?filtro=pendente&msg=aprovado'
+            );
+
+            exit;
+
+        }
+
+
+        // recusar
+        if ($acao === 'recusar') {
+
+            $stmt = $conexao->prepare(
+                "UPDATE feedbacks
+                 SET status = 'recusado'
+                 WHERE id = ?"
+            );
+
+            $stmt->bind_param('i', $id);
+            $stmt->execute();
+            $stmt->close();
+
+            header(
+                'Location: moderacao.php?filtro=pendente&msg=recusado'
+            );
+
+            exit;
+
+        }
+
+
+        // remover feedback aprovado definitivamente
+        if ($acao === 'remover') {
+
+            $stmt = $conexao->prepare(
+                "DELETE FROM feedbacks
+                 WHERE id = ? AND status = 'aprovado'"
+            );
+
+            $stmt->bind_param('i', $id);
+            $stmt->execute();
+            $stmt->close();
+
+            header(
+                'Location: moderacao.php?filtro=aprovado&msg=removido'
+            );
+
+            exit;
+
+        }
 
     }
+
 }
+
+
+
+// contagem dos feedbacks
+$quantidades = [
+    'pendente' => 0,
+    'aprovado' => 0,
+    'recusado' => 0
+];
+
+
+$resultadoContagem = $conexao->query(
+    "SELECT status, COUNT(*) AS total
+     FROM feedbacks
+     WHERE arquivado = 0
+     GROUP BY status"
+);
+
+
+if ($resultadoContagem) {
+
+    while ($item = $resultadoContagem->fetch_assoc()) {
+
+        if (isset($quantidades[$item['status']])) {
+
+            $quantidades[$item['status']] = $item['total'];
+
+        }
+
+    }
+
+}
+
+
+// busca os feedbacks do filtro selecionado
+$stmt = $conexao->prepare(
+    "SELECT
+        id,
+        titulo,
+        categoria,
+        texto,
+        data_criacao,
+        status
+     FROM feedbacks
+     WHERE status = ?
+     AND arquivado = 0
+     ORDER BY data_criacao DESC"
+);
+
+$stmt->bind_param('s', $filtro);
+$stmt->execute();
+
+$resultadoFeedbacks = $stmt->get_result();
 
 ?>
 
 <!DOCTYPE html>
+
 <html lang="pt-BR">
 
 <head>
@@ -45,9 +191,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>Login Administrativo | Sesc Senac Caiobá</title>
+    <title>
+        Moderação de Feedbacks | Sesc Senac Caiobá
+    </title>
+
 
     <script src="https://cdn.tailwindcss.com"></script>
+
 
     <script>
 
@@ -82,188 +232,588 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 
 
-<body class="bg-fundo">
-
-<div class="flex min-h-screen items-center justify-center px-5">
-
-
-    <div class="w-full max-w-md">
+<body
+    class="min-h-screen bg-fundo text-slate-800"
+>
 
 
-        <!-- título -->
+<!-- header -->
 
-        <div class="mb-8 text-center">
+<header
+    class="bg-azul text-white"
+>
 
-            <div
-                class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-azul text-white"
-            >
+    <div
+        class="mx-auto flex max-w-7xl items-center justify-between gap-5 px-5 py-5"
+    >
 
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke-width="1.5"
-                    stroke="currentColor"
-                    class="h-8 w-8"
-                >
 
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M15.75 6a3.75 3.75 0 1 1-7.5 0 
-                        3.75 3.75 0 0 1 7.5 0ZM4.501 
-                        20.118a7.5 7.5 0 0 1 14.998 
-                        0A17.933 17.933 0 0 1 12 
-                        21.75c-2.676 0-5.216-.584-7.499-1.632Z"
-                    />
-
-                </svg>
-
-            </div>
-
+        <div>
 
             <p
-                class="mt-6 text-xs font-bold uppercase tracking-[0.2em] text-laranja"
+                class="text-xs font-bold uppercase tracking-[0.2em] text-orange-300"
             >
-                Área restrita
+                Administração
             </p>
 
 
             <h1
-                class="mt-2 text-3xl font-black text-azul"
+                class="mt-1 text-xl font-black"
             >
                 Painel Administrativo
             </h1>
 
-
-            <p
-                class="mt-3 text-sm leading-6 text-slate-500"
-            >
-                Entre com sua conta de administrador para acessar
-                a moderação de feedbacks.
-            </p>
-
         </div>
 
 
 
-        <!-- formulário -->
-
         <div
-            class="rounded-3xl border border-slate-200 bg-white p-8 shadow-xl"
+            class="flex items-center gap-3"
         >
 
 
-            <?php if ($erro): ?>
+            <!-- voltar ao site -->
 
-                <div
-                    class="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600"
-                >
-                    <?= htmlspecialchars($erro) ?>
-                </div>
-
-            <?php endif; ?>
-
-
-
-            <form method="POST">
-
-
-                <!-- usuário -->
-
-                <div>
-
-                    <label
-                        for="usuario"
-                        class="text-sm font-bold text-azul"
-                    >
-                        Usuário
-                    </label>
-
-
-                    <input
-                        type="text"
-                        id="usuario"
-                        name="usuario"
-                        placeholder="Digite seu usuário"
-                        required
-                        autocomplete="username"
-                        class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none transition focus:border-laranja focus:ring-4 focus:ring-orange-100"
-                    >
-
-                </div>
-
-
-
-                <!-- senha -->
-
-                <div class="mt-5">
-
-                    <label
-                        for="senha"
-                        class="text-sm font-bold text-azul"
-                    >
-                        Senha
-                    </label>
-
-
-                    <input
-                        type="password"
-                        id="senha"
-                        name="senha"
-                        placeholder="Digite sua senha"
-                        required
-                        autocomplete="current-password"
-                        class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none transition focus:border-laranja focus:ring-4 focus:ring-orange-100"
-                    >
-
-                </div>
-
-
-
-                <!-- botão -->
-
-                <button
-                    type="submit"
-                    class="mt-7 w-full rounded-xl bg-azul px-5 py-3.5 font-bold text-white transition hover:bg-azul2"
-                >
-                    Entrar como administrador
-                </button>
-
-
-            </form>
-
-
-
-            <div
-                class="mt-6 border-t border-slate-100 pt-6 text-center"
+            <a
+                href="index.php"
+                class="rounded-xl border border-white/20 px-5 py-2.5 text-sm font-bold transition hover:bg-white/10"
             >
+                Voltar ao site
+            </a>
 
-                <a
-                    href="index.php"
-                    class="text-sm font-semibold text-slate-500 transition hover:text-azul"
-                >
-                    ← Voltar para o site
-                </a>
 
-            </div>
+
+            <!-- sair -->
+
+            <a
+                href="moderacao.php?sair=1"
+                class="rounded-xl bg-laranja px-5 py-2.5 text-sm font-bold text-white transition hover:bg-laranjaEscuro"
+            >
+                Sair
+            </a>
 
 
         </div>
+
+    </div>
+
+</header>
+
+
+
+<!-- conteúdo -->
+
+<main
+    class="mx-auto max-w-7xl px-5 py-12"
+>
+
+
+    <!-- título -->
+
+    <div
+        class="mb-10"
+    >
+
+
+        <span
+            class="text-sm font-bold uppercase tracking-wider text-laranja"
+        >
+            Feedbacks dos estudantes
+        </span>
+
+
+        <h2
+            class="mt-3 text-4xl font-black text-azul md:text-5xl"
+        >
+            Moderação de feedbacks
+        </h2>
 
 
         <p
-            class="mt-6 text-center text-xs text-slate-400"
+            class="mt-4 max-w-2xl leading-7 text-slate-500"
         >
-            Ensino Médio Integrado ao Técnico • Sesc Senac Caiobá
+            Analise os feedbacks enviados pelos estudantes
+            antes de permitir que sejam publicados no mural.
         </p>
 
 
     </div>
 
-</div>
+
+
+    <!-- mensagem aprovado -->
+
+    <?php if (
+        isset($_GET['msg']) &&
+        $_GET['msg'] === 'aprovado'
+    ): ?>
+
+        <div
+            class="mb-8 rounded-xl border border-green-200 bg-green-50 px-5 py-4 text-sm font-bold text-green-700"
+        >
+            ✓ Feedback aprovado com sucesso.
+        </div>
+
+    <?php endif; ?>
+
+
+
+    <!-- mensagem recusado -->
+
+    <?php if (
+        isset($_GET['msg']) &&
+        $_GET['msg'] === 'recusado'
+    ): ?>
+
+        <div
+            class="mb-8 rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-bold text-red-700"
+        >
+            ✕ Feedback recusado.
+        </div>
+
+    <?php endif; ?>
+
+
+
+    <!-- mensagem removido -->
+
+    <?php if (
+        isset($_GET['msg']) &&
+        $_GET['msg'] === 'removido'
+    ): ?>
+
+        <div
+            class="mb-8 rounded-xl border border-blue-200 bg-blue-50 px-5 py-4 text-sm font-bold text-blue-700"
+        >
+            ✓ Feedback apagado definitivamente do sistema.
+        </div>
+
+    <?php endif; ?>
+
+
+    <!-- filtros -->
+
+    <div
+        class="mb-8 flex flex-wrap gap-3 border-b border-slate-200 pb-6"
+    >
+
+
+        <!-- pendentes -->
+
+        <a
+            href="moderacao.php?filtro=pendente"
+            class="rounded-xl px-5 py-3 text-sm font-bold transition
+            <?= $filtro === 'pendente'
+                ? 'bg-azul text-white'
+                : 'bg-white text-slate-600 hover:bg-slate-100' ?>"
+        >
+
+            Pendentes
+
+            <span>
+                (<?= $quantidades['pendente'] ?>)
+            </span>
+
+        </a>
+
+
+
+        <!-- aprovados -->
+
+        <a
+            href="moderacao.php?filtro=aprovado"
+            class="rounded-xl px-5 py-3 text-sm font-bold transition
+            <?= $filtro === 'aprovado'
+                ? 'bg-azul text-white'
+                : 'bg-white text-slate-600 hover:bg-slate-100' ?>"
+        >
+
+            Aprovados
+
+            <span>
+                (<?= $quantidades['aprovado'] ?>)
+            </span>
+
+        </a>
+
+
+
+        <!-- recusados -->
+
+        <a
+            href="moderacao.php?filtro=recusado"
+            class="rounded-xl px-5 py-3 text-sm font-bold transition
+            <?= $filtro === 'recusado'
+                ? 'bg-azul text-white'
+                : 'bg-white text-slate-600 hover:bg-slate-100' ?>"
+        >
+
+            Recusados
+
+            <span>
+                (<?= $quantidades['recusado'] ?>)
+            </span>
+
+        </a>
+
+
+    </div>
+
+
+
+    <!-- lista -->
+
+    <?php if (
+        $resultadoFeedbacks &&
+        $resultadoFeedbacks->num_rows > 0
+    ): ?>
+
+
+        <div
+            class="space-y-5"
+        >
+
+
+            <?php while (
+                $feedback = $resultadoFeedbacks->fetch_assoc()
+            ): ?>
+
+
+                <article
+                    class="rounded-2xl border border-slate-200 bg-white p-7 shadow-sm transition hover:shadow-md"
+                >
+
+
+                    <!-- topo -->
+
+                    <div
+                        class="flex flex-col justify-between gap-4 sm:flex-row sm:items-start"
+                    >
+
+
+                        <div>
+
+
+                            <!-- categoria -->
+
+                            <span
+                                class="inline-block rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-laranjaEscuro"
+                            >
+
+                                <?= htmlspecialchars(
+                                    $feedback['categoria']
+                                ) ?>
+
+                            </span>
+
+
+                            <!-- título -->
+
+                            <h3
+                                class="mt-4 text-xl font-black text-azul"
+                            >
+
+                                <?= htmlspecialchars(
+                                    $feedback['titulo']
+                                ) ?>
+
+                            </h3>
+
+
+                        </div>
+
+
+
+                        <!-- status pendente -->
+
+                        <?php if (
+                            $feedback['status'] === 'pendente'
+                        ): ?>
+
+                            <span
+                                class="w-fit rounded-full bg-yellow-100 px-3 py-1 text-xs font-bold text-yellow-700"
+                            >
+                                Pendente
+                            </span>
+
+
+                        <!-- status aprovado -->
+
+                        <?php elseif (
+                            $feedback['status'] === 'aprovado'
+                        ): ?>
+
+                            <span
+                                class="w-fit rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-700"
+                            >
+                                Aprovado
+                            </span>
+
+
+                        <!-- status recusado -->
+
+                        <?php else: ?>
+
+                            <span
+                                class="w-fit rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-700"
+                            >
+                                Recusado
+                            </span>
+
+                        <?php endif; ?>
+
+
+                    </div>
+
+
+
+                    <!-- texto -->
+
+                    <p
+                        class="mt-5 whitespace-pre-line leading-7 text-slate-600"
+                    >
+
+                        <?= htmlspecialchars(
+                            $feedback['texto']
+                        ) ?>
+
+                    </p>
+
+
+
+                    <!-- parte inferior -->
+
+                    <div
+                        class="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-slate-100 pt-5"
+                    >
+
+
+                        <!-- data -->
+
+                        <span
+                            class="text-xs text-slate-400"
+                        >
+
+                            Anônimo •
+
+                            <?= date(
+                                'd/m/Y H:i',
+                                strtotime(
+                                    $feedback['data_criacao']
+                                )
+                            ) ?>
+
+                        </span>
+
+
+
+                        <!-- ações -->
+
+                        <?php if (
+                            $feedback['status'] === 'pendente'
+                        ): ?>
+
+
+                            <div
+                                class="flex flex-wrap gap-3"
+                            >
+
+
+                                <!-- aprovar -->
+
+                                <form
+                                    method="POST"
+                                    action="moderacao.php"
+                                >
+
+
+                                    <input
+                                        type="hidden"
+                                        name="id"
+                                        value="<?= $feedback['id'] ?>"
+                                    >
+
+
+                                    <input
+                                        type="hidden"
+                                        name="acao"
+                                        value="aprovar"
+                                    >
+
+                                    <input
+                                        type="hidden"
+                                        name="filtro"
+                                        value="<?= htmlspecialchars($filtro) ?>"
+                                    >
+
+
+                                    <button
+                                        type="submit"
+                                        class="rounded-xl bg-azul px-5 py-3 text-sm font-bold text-white transition hover:bg-azul2"
+                                    >
+                                        ✓ Aprovar
+                                    </button>
+
+
+                                </form>
+
+
+
+                                <!-- recusar -->
+
+                                <form
+                                    method="POST"
+                                    action="moderacao.php"
+                                >
+
+
+                                    <input
+                                        type="hidden"
+                                        name="id"
+                                        value="<?= $feedback['id'] ?>"
+                                    >
+
+
+                                    <input
+                                        type="hidden"
+                                        name="acao"
+                                        value="recusar"
+                                    >
+
+                                    <input
+                                        type="hidden"
+                                        name="filtro"
+                                        value="<?= htmlspecialchars($filtro) ?>"
+                                    >
+
+
+                                    <button
+                                        type="submit"
+                                        class="rounded-xl bg-red-50 px-5 py-3 text-sm font-bold text-red-600 transition hover:bg-red-100"
+                                    >
+                                        ✕ Recusar
+                                    </button>
+
+
+                                </form>
+
+
+                            </div>
+
+
+                        <?php elseif (
+                            $feedback['status'] === 'aprovado'
+                        ): ?>
+
+                            <form
+                                method="POST"
+                                action="moderacao.php"
+                                onsubmit="return confirm('Atenção! Este feedback será apagado definitivamente do sistema. Essa ação não pode ser desfeita. Deseja continuar?');"
+                            >
+
+                                <input
+                                    type="hidden"
+                                    name="id"
+                                    value="<?= $feedback['id'] ?>"
+                                >
+
+                                <input
+                                    type="hidden"
+                                    name="acao"
+                                    value="remover"
+                                >
+
+                                <button
+                                    type="submit"
+                                    class="rounded-xl bg-red-50 px-5 py-3 text-sm font-bold text-red-600 transition hover:bg-red-100"
+                                >
+                                    🗑️ Remover do mural
+                                </button>
+
+                            </form>
+
+                        <?php endif; ?>
+
+
+                    </div>
+
+
+                </article>
+
+
+            <?php endwhile; ?>
+
+
+        </div>
+
+
+    <?php else: ?>
+
+
+        <!-- nenhum feedback -->
+
+        <div
+            class="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center"
+        >
+
+
+            <div
+                class="mx-auto grid h-14 w-14 place-items-center rounded-full bg-slate-100 text-2xl text-azul"
+            >
+                ✓
+            </div>
+
+
+            <h3
+                class="mt-5 text-xl font-black text-azul"
+            >
+                Nenhum feedback encontrado
+            </h3>
+
+
+            <p
+                class="mt-2 text-sm text-slate-500"
+            >
+
+
+                <?php if (
+                    $filtro === 'pendente'
+                ): ?>
+
+                    Não existem feedbacks aguardando moderação.
+
+
+                <?php elseif (
+                    $filtro === 'aprovado'
+                ): ?>
+
+                    Nenhum feedback foi aprovado ainda.
+
+
+                <?php else: ?>
+
+                    Nenhum feedback foi recusado ainda.
+
+                <?php endif; ?>
+
+
+            </p>
+
+
+        </div>
+
+
+    <?php endif; ?>
+
+
+</main>
 
 
 </body>
 
 </html>
+
+<?php
+$stmt->close();
+$conexao->close();
+?>
