@@ -37,7 +37,8 @@ $filtro = $_POST['filtro'] ?? $_GET['filtro'] ?? 'pendente';
 $filtrosPermitidos = [
     'pendente',
     'aprovado',
-    'recusado'
+    'recusado',
+    'inativo'
 ];
 
 if (!in_array($filtro, $filtrosPermitidos, true)) {
@@ -45,74 +46,81 @@ if (!in_array($filtro, $filtrosPermitidos, true)) {
 }
 
 
-// aprovar, recusar ou remover feedback
+// alterar status do feedback
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $id = intval($_POST['id'] ?? 0);
     $acao = $_POST['acao'] ?? '';
+    $filtroAtual = $_POST['filtro'] ?? 'pendente';
 
 
-    if ($id > 0) {
+    if (!in_array($filtroAtual, $filtrosPermitidos, true)) {
+        $filtroAtual = 'pendente';
+    }
 
 
-        // aprovar
-        if ($acao === 'aprovar') {
+    if ($id > 0 && $acao === 'alterar_status') {
 
-            $stmt = $conexao->prepare(
-                "UPDATE feedbacks
-                 SET status = 'aprovado'
-                 WHERE id = ?"
+        $novoStatus = $_POST['novo_status'] ?? '';
+
+
+        if (in_array($novoStatus, ['aprovado', 'recusado', 'inativo'], true)) {
+
+            // verifica o status atual antes de alterar
+            $stmtAtual = $conexao->prepare(
+                "SELECT status
+                 FROM feedbacks
+                 WHERE id = ?
+                 AND arquivado = 0"
             );
 
-            $stmt->bind_param('i', $id);
-            $stmt->execute();
-            $stmt->close();
+            $stmtAtual->bind_param('i', $id);
+            $stmtAtual->execute();
+            $resultadoAtual = $stmtAtual->get_result();
+            $feedbackAtual = $resultadoAtual->fetch_assoc();
+            $stmtAtual->close();
+
+
+            // feedback inativo não pode mais ser reativado
+            if ($feedbackAtual && $feedbackAtual['status'] === 'inativo') {
+
+                $mensagem = 'inativo_sem_acao';
+
+            } elseif ($feedbackAtual) {
+
+                $stmt = $conexao->prepare(
+                    "UPDATE feedbacks
+                     SET status = ?
+                     WHERE id = ?
+                     AND arquivado = 0"
+                );
+
+                $stmt->bind_param('si', $novoStatus, $id);
+                $stmt->execute();
+                $alterado = $stmt->affected_rows > 0;
+                $stmt->close();
+
+
+                if ($alterado) {
+
+                    if ($novoStatus === 'aprovado') {
+                        $mensagem = 'aprovado';
+                    } elseif ($novoStatus === 'recusado') {
+                        $mensagem = 'recusado';
+                    } else {
+                        $mensagem = 'inativo';
+                    }
+
+                } else {
+                    $mensagem = 'erro';
+                }
+
+            } else {
+                $mensagem = 'erro';
+            }
 
             header(
-                'Location: moderacao.php?filtro=pendente&msg=aprovado'
-            );
-
-            exit;
-
-        }
-
-
-        // recusar
-        if ($acao === 'recusar') {
-
-            $stmt = $conexao->prepare(
-                "UPDATE feedbacks
-                 SET status = 'recusado'
-                 WHERE id = ?"
-            );
-
-            $stmt->bind_param('i', $id);
-            $stmt->execute();
-            $stmt->close();
-
-            header(
-                'Location: moderacao.php?filtro=pendente&msg=recusado'
-            );
-
-            exit;
-
-        }
-
-
-        // remover feedback aprovado definitivamente
-        if ($acao === 'remover') {
-
-            $stmt = $conexao->prepare(
-                "DELETE FROM feedbacks
-                 WHERE id = ? AND status = 'aprovado'"
-            );
-
-            $stmt->bind_param('i', $id);
-            $stmt->execute();
-            $stmt->close();
-
-            header(
-                'Location: moderacao.php?filtro=aprovado&msg=removido'
+                'Location: moderacao.php?filtro=' . urlencode($filtroAtual) . '&msg=' . $mensagem
             );
 
             exit;
@@ -129,7 +137,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $quantidades = [
     'pendente' => 0,
     'aprovado' => 0,
-    'recusado' => 0
+    'recusado' => 0,
+    'inativo' => 0
 ];
 
 
@@ -197,6 +206,11 @@ $resultadoFeedbacks = $stmt->get_result();
 
 
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    >
 
 
     <script>
@@ -341,52 +355,51 @@ $resultadoFeedbacks = $stmt->get_result();
 
 
 
-    <!-- mensagem aprovado -->
+    <!-- mensagens do sistema -->
 
-    <?php if (
-        isset($_GET['msg']) &&
-        $_GET['msg'] === 'aprovado'
-    ): ?>
+    <?php if (isset($_GET['msg'])): ?>
 
-        <div
-            class="mb-8 rounded-xl border border-green-200 bg-green-50 px-5 py-4 text-sm font-bold text-green-700"
-        >
-            ✓ Feedback aprovado com sucesso.
-        </div>
+        <?php if ($_GET['msg'] === 'aprovado'): ?>
 
-    <?php endif; ?>
+            <div
+                class="mb-8 rounded-xl border border-green-200 bg-green-50 px-5 py-4 text-sm font-bold text-green-700"
+            >
+                ✓ Feedback movido para os aprovados com sucesso.
+            </div>
 
+        <?php elseif ($_GET['msg'] === 'recusado'): ?>
 
+            <div
+                class="mb-8 rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-bold text-red-700"
+            >
+                ✕ Feedback movido para os recusados com sucesso.
+            </div>
 
-    <!-- mensagem recusado -->
+        <?php elseif ($_GET['msg'] === 'inativo'): ?>
 
-    <?php if (
-        isset($_GET['msg']) &&
-        $_GET['msg'] === 'recusado'
-    ): ?>
+            <div
+                class="mb-8 rounded-xl border border-slate-200 bg-slate-100 px-5 py-4 text-sm font-bold text-slate-700"
+            >
+                ⏸ Feedback marcado como inativo com sucesso.
+            </div>
 
-        <div
-            class="mb-8 rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-bold text-red-700"
-        >
-            ✕ Feedback recusado.
-        </div>
+        <?php elseif ($_GET['msg'] === 'inativo_sem_acao'): ?>
 
-    <?php endif; ?>
+            <div
+                class="mb-8 rounded-xl border border-slate-200 bg-slate-100 px-5 py-4 text-sm font-bold text-slate-700"
+            >
+                ⏸ Este feedback está inativo e não pode mais ser reativado.
+            </div>
 
+        <?php elseif ($_GET['msg'] === 'erro'): ?>
 
+            <div
+                class="mb-8 rounded-xl border border-yellow-200 bg-yellow-50 px-5 py-4 text-sm font-bold text-yellow-700"
+            >
+                ! Não foi possível alterar o status deste feedback.
+            </div>
 
-    <!-- mensagem removido -->
-
-    <?php if (
-        isset($_GET['msg']) &&
-        $_GET['msg'] === 'removido'
-    ): ?>
-
-        <div
-            class="mb-8 rounded-xl border border-blue-200 bg-blue-50 px-5 py-4 text-sm font-bold text-blue-700"
-        >
-            ✓ Feedback apagado definitivamente do sistema.
-        </div>
+        <?php endif; ?>
 
     <?php endif; ?>
 
@@ -452,6 +465,26 @@ $resultadoFeedbacks = $stmt->get_result();
 
             <span>
                 (<?= $quantidades['recusado'] ?>)
+            </span>
+
+        </a>
+
+
+
+        <!-- inativos -->
+
+        <a
+            href="moderacao.php?filtro=inativo"
+            class="rounded-xl px-5 py-3 text-sm font-bold transition
+            <?= $filtro === 'inativo'
+                ? 'bg-slate-600 text-white'
+                : 'bg-white text-slate-600 hover:bg-slate-100' ?>"
+        >
+
+            Inativos
+
+            <span>
+                (<?= $quantidades['inativo'] ?>)
             </span>
 
         </a>
@@ -552,12 +585,25 @@ $resultadoFeedbacks = $stmt->get_result();
 
                         <!-- status recusado -->
 
-                        <?php else: ?>
+                        <?php elseif (
+                            $feedback['status'] === 'recusado'
+                        ): ?>
 
                             <span
                                 class="w-fit rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-700"
                             >
                                 Recusado
+                            </span>
+
+
+                        <!-- status inativo -->
+
+                        <?php else: ?>
+
+                            <span
+                                class="w-fit rounded-full bg-slate-200 px-3 py-1 text-xs font-bold text-slate-700"
+                            >
+                                Inativo
                             </span>
 
                         <?php endif; ?>
@@ -626,37 +672,19 @@ $resultadoFeedbacks = $stmt->get_result();
                                     action="moderacao.php"
                                 >
 
-
-                                    <input
-                                        type="hidden"
-                                        name="id"
-                                        value="<?= $feedback['id'] ?>"
-                                    >
-
-
-                                    <input
-                                        type="hidden"
-                                        name="acao"
-                                        value="aprovar"
-                                    >
-
-                                    <input
-                                        type="hidden"
-                                        name="filtro"
-                                        value="<?= htmlspecialchars($filtro) ?>"
-                                    >
-
+                                    <input type="hidden" name="id" value="<?= $feedback['id'] ?>">
+                                    <input type="hidden" name="acao" value="alterar_status">
+                                    <input type="hidden" name="novo_status" value="aprovado">
+                                    <input type="hidden" name="filtro" value="<?= htmlspecialchars($filtro) ?>">
 
                                     <button
                                         type="submit"
                                         class="rounded-xl bg-azul px-5 py-3 text-sm font-bold text-white transition hover:bg-azul2"
                                     >
-                                        ✓ Aprovar
+                                        <i class="bi bi-check-circle mr-2" aria-hidden="true"></i>Aprovar
                                     </button>
 
-
                                 </form>
-
 
 
                                 <!-- recusar -->
@@ -666,37 +694,19 @@ $resultadoFeedbacks = $stmt->get_result();
                                     action="moderacao.php"
                                 >
 
-
-                                    <input
-                                        type="hidden"
-                                        name="id"
-                                        value="<?= $feedback['id'] ?>"
-                                    >
-
-
-                                    <input
-                                        type="hidden"
-                                        name="acao"
-                                        value="recusar"
-                                    >
-
-                                    <input
-                                        type="hidden"
-                                        name="filtro"
-                                        value="<?= htmlspecialchars($filtro) ?>"
-                                    >
-
+                                    <input type="hidden" name="id" value="<?= $feedback['id'] ?>">
+                                    <input type="hidden" name="acao" value="alterar_status">
+                                    <input type="hidden" name="novo_status" value="recusado">
+                                    <input type="hidden" name="filtro" value="<?= htmlspecialchars($filtro) ?>">
 
                                     <button
                                         type="submit"
                                         class="rounded-xl bg-red-50 px-5 py-3 text-sm font-bold text-red-600 transition hover:bg-red-100"
                                     >
-                                        ✕ Recusar
+                                        <i class="bi bi-x-circle mr-2" aria-hidden="true"></i>Recusar
                                     </button>
 
-
                                 </form>
-
 
                             </div>
 
@@ -705,32 +715,124 @@ $resultadoFeedbacks = $stmt->get_result();
                             $feedback['status'] === 'aprovado'
                         ): ?>
 
-                            <form
-                                method="POST"
-                                action="moderacao.php"
-                                onsubmit="return confirm('Atenção! Este feedback será apagado definitivamente do sistema. Essa ação não pode ser desfeita. Deseja continuar?');"
+                            <!-- ações do aprovado -->
+
+                            <div
+                                class="flex flex-wrap gap-3"
                             >
 
-                                <input
-                                    type="hidden"
-                                    name="id"
-                                    value="<?= $feedback['id'] ?>"
+                                <!-- mover para recusados -->
+
+                                <form
+                                    method="POST"
+                                    action="moderacao.php"
                                 >
 
-                                <input
-                                    type="hidden"
-                                    name="acao"
-                                    value="remover"
+                                    <input type="hidden" name="id" value="<?= $feedback['id'] ?>">
+                                    <input type="hidden" name="acao" value="alterar_status">
+                                    <input type="hidden" name="novo_status" value="recusado">
+                                    <input type="hidden" name="filtro" value="<?= htmlspecialchars($filtro) ?>">
+
+                                    <button
+                                        type="submit"
+                                        class="rounded-xl bg-red-50 px-5 py-3 text-sm font-bold text-red-600 transition hover:bg-red-100"
+                                    >
+                                        <i class="bi bi-arrow-left-right mr-2" aria-hidden="true"></i>Mover para recusados
+                                    </button>
+
+                                </form>
+
+
+                                <!-- inativar -->
+
+                                <form
+                                    method="POST"
+                                    action="moderacao.php"
                                 >
 
-                                <button
-                                    type="submit"
-                                    class="rounded-xl bg-red-50 px-5 py-3 text-sm font-bold text-red-600 transition hover:bg-red-100"
-                                >
-                                    🗑️ Remover do mural
-                                </button>
+                                    <input type="hidden" name="id" value="<?= $feedback['id'] ?>">
+                                    <input type="hidden" name="acao" value="alterar_status">
+                                    <input type="hidden" name="novo_status" value="inativo">
+                                    <input type="hidden" name="filtro" value="<?= htmlspecialchars($filtro) ?>">
 
-                            </form>
+                                    <button
+                                        type="submit"
+                                        class="rounded-xl bg-slate-100 px-5 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-200"
+                                    >
+                                        <i class="bi bi-pause-circle mr-2" aria-hidden="true"></i>Inativar
+                                    </button>
+
+                                </form>
+
+                            </div>
+
+
+                        <?php elseif (
+                            $feedback['status'] === 'recusado'
+                        ): ?>
+
+                            <!-- ações do recusado -->
+
+                            <div
+                                class="flex flex-wrap gap-3"
+                            >
+
+                                <!-- mover para aprovados -->
+
+                                <form
+                                    method="POST"
+                                    action="moderacao.php"
+                                >
+
+                                    <input type="hidden" name="id" value="<?= $feedback['id'] ?>">
+                                    <input type="hidden" name="acao" value="alterar_status">
+                                    <input type="hidden" name="novo_status" value="aprovado">
+                                    <input type="hidden" name="filtro" value="<?= htmlspecialchars($filtro) ?>">
+
+                                    <button
+                                        type="submit"
+                                        class="rounded-xl bg-azul px-5 py-3 text-sm font-bold text-white transition hover:bg-azul2"
+                                    >
+                                        <i class="bi bi-arrow-left-right mr-2" aria-hidden="true"></i>Mover para aprovados
+                                    </button>
+
+                                </form>
+
+
+                                <!-- inativar -->
+
+                                <form
+                                    method="POST"
+                                    action="moderacao.php"
+                                >
+
+                                    <input type="hidden" name="id" value="<?= $feedback['id'] ?>">
+                                    <input type="hidden" name="acao" value="alterar_status">
+                                    <input type="hidden" name="novo_status" value="inativo">
+                                    <input type="hidden" name="filtro" value="<?= htmlspecialchars($filtro) ?>">
+
+                                    <button
+                                        type="submit"
+                                        class="rounded-xl bg-slate-100 px-5 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-200"
+                                    >
+                                        <i class="bi bi-pause-circle mr-2" aria-hidden="true"></i>Inativar
+                                    </button>
+
+                                </form>
+
+                            </div>
+
+                        <?php elseif (
+                            $feedback['status'] === 'inativo'
+                        ): ?>
+
+                            <!-- inativo não possui mais ações -->
+
+                            <span
+                                class="rounded-xl bg-slate-100 px-5 py-3 text-sm font-bold text-slate-500"
+                            >
+                                <i class="bi bi-slash-circle mr-2" aria-hidden="true"></i>Feedback inativo — sem ações disponíveis
+                            </span>
 
                         <?php endif; ?>
 
@@ -790,9 +892,16 @@ $resultadoFeedbacks = $stmt->get_result();
                     Nenhum feedback foi aprovado ainda.
 
 
-                <?php else: ?>
+                <?php elseif (
+                    $filtro === 'recusado'
+                ): ?>
 
                     Nenhum feedback foi recusado ainda.
+
+
+                <?php else: ?>
+
+                    Nenhum feedback está marcado como inativo.
 
                 <?php endif; ?>
 
