@@ -494,23 +494,23 @@ $resultado_feedbacks = $conexao->query("SELECT * FROM feedbacks WHERE status = '
             <div class="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
 
                 <div class="border-l-4 border-laranja bg-white p-7 shadow-sm">
-                    <h3 class="font-black text-azul">Biblioteca</h3>
+                    <h3 class="font-black text-azul">Clube de Literatura</h3>
                     <p class="mt-3 text-sm leading-6 text-slate-500">
                         Acesso a acervo físico e digital para estudo, pesquisa e leitura.
                     </p>
                 </div>
 
                 <div class="border-l-4 border-laranja bg-white p-7 shadow-sm">
-                    <h3 class="font-black text-azul">Laboratório</h3>
+                    <h3 class="font-black text-azul">Clube de Ciências</h3>
                     <p class="mt-3 text-sm leading-6 text-slate-500">
                         Ambiente de informática voltado às atividades e à formação técnica.
                     </p>
                 </div>
 
                 <div class="border-l-4 border-laranja bg-white p-7 shadow-sm">
-                    <h3 class="font-black text-azul">Ginásio</h3>
+                    <h3 class="font-black text-azul">Esportes</h3>
                     <p class="mt-3 text-sm leading-6 text-slate-500">
-                        Espaço esportivo utilizado em práticas, integração e eventos escolares.
+                        Prática de esportes como Futesal e Vòlei no ginásio.
                     </p>
                 </div>
 
