@@ -1,92 +1,110 @@
-    <footer class="px-5 py-12 text-white bg-azul">
+<footer class="bg-azul px-5 py-12 text-white">
 
-        <div class="mx-auto max-w-7xl">
+    <div class="mx-auto max-w-7xl">
 
-            <div class="grid gap-10 md:grid-cols-3">
+        <div class="grid gap-10 md:grid-cols-3">
 
-                <div>
+            <!-- IDENTIDADE DO SITE -->
+            <div>
 
-                    <div class="flex items-center gap-3 text-white">
+                <div class="flex items-center gap-3 text-white">
 
-                        <span class=" rounded-md">
-                            <img class="h-30 w-[px]" src="./img/natanLucas.png" alt="Logo EMI">
-                        </span>
-
-                        <!-- <strong>
-                            Sesc Senac
-                        </strong> -->
-
-                    </div>
-
-                    <p class="mt-4 max-w-sm text-sm leading-7">
-
-                        Educação, tecnologia e inclusão para preparar estudantes
-                        para os desafios do futuro.
-
-                    </p>
+                    <img
+                        class="h-20 w-auto"
+                        src="./img/natanLucas.png"
+                        alt="Logo EMI">
 
                 </div>
 
-                <div>
+                <p class="mt-4 max-w-sm text-sm leading-7">
+                    Educação, tecnologia e inclusão para preparar estudantes
+                    para os desafios do futuro.
+                </p>
 
-                    <h3 class="font-bold text-white">
-                        Navegação
-                    </h3>
+            </div>
 
-                    <div class="mt-4 flex flex-col gap-2 text-sm">
+            <!-- NAVEGAÇÃO -->
+            <div>
 
-                        <a href="#escola" class="transition hover:text-laranja">
-                            A Escola
-                        </a>
+                <h3 class="font-bold text-white">
+                    Navegação
+                </h3>
 
-                        <a href="#ensino" class="transition hover:text-laranja">
-                            Ensino
-                        </a>
+                <div class="mt-4 flex flex-col gap-2 text-sm">
 
-                        <a href="#cursos" class="transition hover:text-laranja">
-                            Cursos
-                        </a>
+                    <a href="index.php#escola"
+                       class="transition hover:text-laranja">
+                        A Escola
+                    </a>
 
-                        <a href="#feiras" class="transition hover:text-laranja">
-                            Feiras
-                        </a>
+                    <a href="index.php#ensino"
+                       class="transition hover:text-laranja">
+                        Ensino
+                    </a>
 
-                        <a href="#clubes" class="transition hover:text-laranja">
-                            Clubes
-                        </a>
+                    <a href="index.php#cursos"
+                       class="transition hover:text-laranja">
+                        Cursos
+                    </a>
 
-                        <a href="login.php" class="transition hover:text-laranja">
-                            Área do estudante
-                        </a>
+                    <a href="index.php#feiras"
+                       class="transition hover:text-laranja">
+                        Feiras
+                    </a>
 
-                    </div>
-
-                </div>
-
-                <div>
-
-                    <h3 class="font-bold text-white">
-                        Contato
-                    </h3>
-
-                    <p class="mt-4 text-sm">
-                        contato@sescsenac.br
-                    </p>
-
-                    <p class="mt-2 text-sm">
-                        Ensino Médio
-                    </p>
+                    <a href="index.php#clubes"
+                       class="transition hover:text-laranja">
+                        Clubes
+                    </a>
 
                 </div>
 
             </div>
 
-            <div class="mt-10 border-t border-white/10 pt-5 text-center text-xs">
+            <!-- CONTATO -->
+            <div>
 
-                © 2026 Sesc Senac — Ensino Médio
+                <h3 class="font-bold text-white">
+                    Contato
+                </h3>
+
+                <p class="mt-4 text-sm">
+                    contato@sescsenac.br
+                </p>
+
+                <p class="mt-2 text-sm">
+                    Ensino Médio
+                </p>
 
             </div>
 
         </div>
 
-    </footer>
+        <!-- PARTE INFERIOR -->
+        <div class="mt-10 flex flex-col items-center justify-between
+                    gap-4 border-t border-white/10 pt-5
+                    text-center sm:flex-row sm:text-left">
+
+            <p class="text-xs text-white/70">
+                © 2026 Sesc Senac — Ensino Médio
+            </p>
+
+            <!-- ACESSO ADMINISTRATIVO -->
+            <a
+                href="login.php"
+                class="inline-flex items-center gap-2 rounded-lg
+                       px-3 py-2 text-xs text-white/60
+                       transition hover:bg-white/10
+                       hover:text-laranja">
+
+                <i class="bi bi-shield-lock"></i>
+
+                Login administrativo
+
+            </a>
+
+        </div>
+
+    </div>
+
+</footer>

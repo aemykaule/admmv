@@ -494,23 +494,23 @@ $resultado_feedbacks = $conexao->query("SELECT * FROM feedbacks WHERE status = '
             <div class="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
 
                 <div class="border-l-4 border-laranja bg-white p-7 shadow-sm">
-                    <h3 class="font-black text-azul">Biblioteca</h3>
+                    <h3 class="font-black text-azul">Clube de Literatura</h3>
                     <p class="mt-3 text-sm leading-6 text-slate-500">
                         Acesso a acervo físico e digital para estudo, pesquisa e leitura.
                     </p>
                 </div>
 
                 <div class="border-l-4 border-laranja bg-white p-7 shadow-sm">
-                    <h3 class="font-black text-azul">Laboratório</h3>
+                    <h3 class="font-black text-azul">Clube de Ciências</h3>
                     <p class="mt-3 text-sm leading-6 text-slate-500">
                         Ambiente de informática voltado às atividades e à formação técnica.
                     </p>
                 </div>
 
                 <div class="border-l-4 border-laranja bg-white p-7 shadow-sm">
-                    <h3 class="font-black text-azul">Ginásio</h3>
+                    <h3 class="font-black text-azul">Esportes</h3>
                     <p class="mt-3 text-sm leading-6 text-slate-500">
-                        Espaço esportivo utilizado em práticas, integração e eventos escolares.
+                        Prática de esportes como Futesal e Vòlei no ginásio.
                     </p>
                 </div>
 
@@ -527,168 +527,324 @@ $resultado_feedbacks = $conexao->query("SELECT * FROM feedbacks WHERE status = '
 
 
     <!-- feedbacks anônimos -->
-    <section id="feedbacks" class="min-h-[calc(100vh-73px)] flex flex-col justify-center scroll-mt-[73px] bg-white px-5 py-20">
+    <section id="feedbacks" class="min-h-[calc(100vh-73px)] flex flex-col justify-center scroll-mt-[73px] bg-fundo px-5 py-20">
 
         <div class="mx-auto w-full max-w-7xl">
 
-            <div class="grid items-start gap-12 lg:grid-cols-[0.9fr_1.1fr]">
+            <!-- título -->
+            <div class="max-w-3xl">
 
-                <!-- apresentação e formulário -->
-                <div class="lg:sticky lg:top-28">
-                    <span class="text-sm font-bold uppercase tracking-wider text-laranja">
-                        Voz dos estudantes
-                    </span>
+                <span class="text-sm font-bold uppercase tracking-wider text-laranja">
+                    Voz dos estudantes
+                </span>
 
-                    <h2 class="mt-3 text-4xl font-black leading-tight text-azul md:text-5xl">
-                        Mural de feedbacks anônimos
-                    </h2>
+                <h2 class="mt-3 text-4xl font-black leading-tight text-azul md:text-5xl">
+                    O que os estudantes estão dizendo
+                </h2>
 
-                    <p class="mt-5 max-w-xl leading-8 text-slate-500">
-                        Um espaço para compartilhar opiniões, sugestões e experiências sobre a rotina escolar.
-                        Os feedbacks são exibidos sem identificação do autor.
-                    </p>
+                <p class="mt-5 leading-8 text-slate-500">
+                    Confira opiniões, sugestões e experiências compartilhadas pelos estudantes.
+                    Os feedbacks publicados são exibidos de forma anônima.
+                </p>
 
-                    <!-- Alterado: método POST e destino para o próprio index.php -->
-                    <form action="index.php" method="POST" class="mt-8 rounded-3xl bg-fundo p-6 shadow-sm ring-1 ring-slate-100 md:p-8">
-                        <div>
-                            <label for="feedback-titulo" class="text-sm font-bold text-azul">
-                                Título do feedback
-                            </label>
-                            <!-- Alterado: adicionado o name="titulo" e validação required -->
-                            <input
-                                id="feedback-titulo"
-                                name="titulo"
-                                type="text"
-                                maxlength="70"
-                                required
-                                placeholder="Ex.: Uma sugestão para os intervalos"
-                                class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-laranja focus:ring-4 focus:ring-orange-100">
-                        </div>
+            </div>
 
-                        <div class="mt-5">
-                            <label for="feedback-categoria" class="text-sm font-bold text-azul">
-                                Categoria
-                            </label>
-                            <!-- Alterado: adicionado o name="categoria" e os values em cada option -->
-                            <select
-                                id="feedback-categoria"
-                                name="categoria"
-                                class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-laranja focus:ring-4 focus:ring-orange-100">
-                                <option value="Ensino">Ensino</option>
-                                <option value="Estrutura">Estrutura</option>
-                                <option value="Projetos">Projetos</option>
-                                <option value="Convivência">Convivência</option>
-                                <option value="Sugestão">Sugestão</option>
-                            </select>
-                        </div>
 
-                        <div class="mt-5">
-                            <label for="feedback-texto" class="text-sm font-bold text-azul">
-                                Seu feedback
-                            </label>
-                            <!-- Alterado: adicionado o name="texto" e validação required -->
-                            <textarea
-                                id="feedback-texto"
-                                name="texto"
-                                rows="5"
-                                maxlength="500"
-                                required
-                                placeholder="Escreva sua opinião, sugestão ou experiência..."
-                                class="mt-2 w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 outline-none transition focus:border-laranja focus:ring-4 focus:ring-orange-100"></textarea>
-                        </div>
+            <!-- carrossel -->
+            <div class="relative mt-10">
 
-                        <div class="mt-5 flex items-start gap-3 rounded-xl bg-white p-4">
-                            <div class="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-orange-100 text-laranja">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
-                                </svg>
+                <div id="feedbackViewport" class="overflow-hidden">
 
-                            </div>
-                            <p class="text-xs leading-5 text-slate-500">
-                                Sua identidade não será exibida junto ao feedback. Evite colocar dados pessoais na mensagem.
-                            </p>
-                        </div>
+                    <div
+                        id="feedbackTrack"
+                        class="flex gap-4 transition-transform duration-500 ease-out"
+                    >
 
-                        <!-- Alterado: tipo alterado para "submit" para disparar a requisição PHP -->
-                        <button
-                            type="submit"
-                            class="mt-6 w-full rounded-xl bg-azul px-6 py-3.5 font-bold text-white transition hover:bg-azul2">
-                            Enviar feedback anônimo
-                        </button>
-                    </form>
-                </div>
-
-                <!-- publicações dinâmicas vindas do phpMyAdmin -->
-                <div>
-                    <div class="flex flex-wrap items-end justify-between gap-4 border-b border-slate-200 pb-5">
-                        <div>
-                            <p class="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
-                                Publicações recentes
-                            </p>
-                            <h3 class="mt-2 text-2xl font-black text-azul">
-                                O que os estudantes estão dizendo
-                            </h3>
-                        </div>
-
-                        <span class="rounded-full bg-fundo px-4 py-2 text-xs font-bold text-slate-500">
-                            Feedbacks anônimos
-                        </span>
-                    </div>
-
-                    <div class="mt-7 space-y-5">
                         <?php
-                        // Loop que percorre e renderiza os feedbacks salvos no banco de dados
+                        $feedbacks_carrossel = [];
+
                         if (isset($resultado_feedbacks) && $resultado_feedbacks->num_rows > 0):
                             while ($row = $resultado_feedbacks->fetch_assoc()):
-                                // Converte e formata a data armazenada pelo servidor MySQL
+                                $feedbacks_carrossel[] = $row;
+                            endwhile;
+                        endif;
+                        ?>
+
+                        <?php if (count($feedbacks_carrossel) > 0): ?>
+
+                            <?php foreach ($feedbacks_carrossel as $row): ?>
+
+                                <?php
                                 $data_formatada = date('d/m/Y H:i', strtotime($row['data_criacao']));
 
-                                // Define dinamicamente a cor da tag com base na categoria
                                 $cor_tag = "bg-orange-100 text-laranjaEscuro";
+
                                 if ($row['categoria'] === 'Ensino') {
                                     $cor_tag = "bg-blue-50 text-azul";
                                 } elseif ($row['categoria'] === 'Estrutura') {
                                     $cor_tag = "bg-emerald-50 text-emerald-700";
                                 }
-                        ?>
-                                <article class="group rounded-2xl border border-slate-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg md:p-7">
-                                    <div class="flex items-center justify-between gap-4">
-                                        <span class="rounded-full px-3 py-1 text-xs font-bold <?php echo $cor_tag; ?>">
-                                            <?php echo htmlspecialchars($row['categoria']); ?>
-                                        </span>
-                                        <span class="text-xs text-slate-400">Anônimo • <?php echo $data_formatada; ?></span>
+                                ?>
+
+                                <article
+                                    class="feedback-card min-w-0 flex-[0_0_100%] rounded-2xl border border-slate-200 border-t-4 border-t-laranja bg-white p-7 text-slate-700 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg sm:flex-[0_0_calc(50%-0.5rem)] xl:flex-[0_0_calc(25%-0.75rem)]"
+                                >
+
+                                    <div class="flex h-full min-h-[310px] flex-col">
+
+                                        <div class="flex items-center justify-between gap-3">
+
+                                            <span class="rounded-full px-3 py-1 text-xs font-bold <?php echo $cor_tag; ?>">
+                                                <?php echo htmlspecialchars($row['categoria']); ?>
+                                            </span>
+
+                                            <span class="text-xs font-medium text-slate-400">
+                                                Anônimo
+                                            </span>
+
+                                        </div>
+
+                                        <h3 class="mt-7 text-xl font-black text-azul">
+                                            <?php echo htmlspecialchars($row['titulo']); ?>
+                                        </h3>
+
+                                        <p class="mt-4 flex-1 leading-7 text-slate-600 whitespace-pre-line">
+                                            <?php echo htmlspecialchars($row['texto']); ?>
+                                        </p>
+
+                                        <div class="mt-6 border-t border-slate-100 pt-4 text-xs font-semibold text-slate-400">
+                                            Comunidade escolar • <?php echo $data_formatada; ?>
+                                        </div>
+
                                     </div>
 
-                                    <h4 class="mt-5 text-xl font-black text-azul">
-                                        <?php echo htmlspecialchars($row['titulo']); ?>
-                                    </h4>
-
-                                    <p class="mt-3 leading-7 text-slate-500 whitespace-pre-line">
-                                        <?php echo htmlspecialchars($row['texto']); ?>
-                                    </p>
-
-                                    <div class="mt-5 border-t border-slate-100 pt-4 text-xs font-semibold text-slate-400">
-                                        Comunidade escolar
-                                    </div>
                                 </article>
-                            <?php
-                            endwhile;
-                        else:
-                            ?>
-                            <!-- Card substituto exibido caso a tabela do banco esteja vazia -->
-                            <div class="rounded-2xl border border-dashed border-slate-200 p-10 text-center">
+
+                            <?php endforeach; ?>
+
+                        <?php else: ?>
+
+                            <article class="w-full rounded-2xl border border-dashed border-slate-200 bg-fundo p-10 text-center">
                                 <p class="text-sm italic text-slate-400">
                                     Nenhum feedback publicado ainda. Seja o primeiro a compartilhar sua experiência!
                                 </p>
-                            </div>
+                            </article>
+
                         <?php endif; ?>
+
                     </div>
+
+                </div>
+
+
+                <!-- controles -->
+                <?php if (count($feedbacks_carrossel) > 1): ?>
+
+                    <div
+                        id="controlesFeedback"
+                        class="mt-7 flex items-center justify-end gap-3"
+                    >
+
+                        <button
+                            type="button"
+                            id="feedbackAnterior"
+                            aria-label="Feedback anterior"
+                            class="grid h-11 w-11 place-items-center rounded-full border border-slate-200 bg-white text-xl text-azul shadow-sm transition hover:border-laranja hover:bg-orange-50 hover:text-laranja"
+                        >
+                            &#10094;
+                        </button>
+
+                        <button
+                            type="button"
+                            id="feedbackProximo"
+                            aria-label="Próximo feedback"
+                            class="grid h-11 w-11 place-items-center rounded-full bg-azul text-xl text-white shadow-sm transition hover:bg-azul2"
+                        >
+                            &#10095;
+                        </button>
+
+                    </div>
+
+                <?php endif; ?>
+
+
+                <!-- botão para adicionar feedback -->
+                <div class="mt-8 flex justify-center">
+
+                    <button
+                        type="button"
+                        id="abrirFormularioFeedback"
+                        class="inline-flex items-center gap-3 rounded-xl bg-laranja px-7 py-4 font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-laranjaEscuro hover:shadow-lg"
+                    >
+                        Adicionar feedback
+
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke-width="2"
+                            stroke="currentColor"
+                            class="h-5 w-5"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M12 4.5v15m7.5-7.5h-15"
+                            />
+                        </svg>
+
+                    </button>
+
                 </div>
 
             </div>
-        </div>
-    </section>
 
+        </div>
+
+
+        <!-- modal do formulário de feedback -->
+        <div
+            id="modalFeedback"
+            class="fixed inset-0 z-[100] hidden items-center justify-center bg-azul/50 px-5 py-8 backdrop-blur-sm"
+        >
+
+            <div
+                id="caixaFeedback"
+                class="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-fundo p-6 shadow-2xl md:p-8"
+            >
+
+                <!-- fechar -->
+                <button
+                    type="button"
+                    id="fecharFormularioFeedback"
+                    aria-label="Fechar formulário"
+                    class="absolute right-5 top-5 grid h-10 w-10 place-items-center rounded-full text-2xl text-slate-400 transition hover:bg-white hover:text-azul"
+                >
+                    &times;
+                </button>
+
+
+                <div class="pr-10">
+
+                    <span class="text-xs font-bold uppercase tracking-[0.18em] text-laranja">
+                        Voz dos estudantes
+                    </span>
+
+                    <h3 class="mt-2 text-3xl font-black text-azul">
+                        Envie seu feedback
+                    </h3>
+
+                    <p class="mt-2 text-sm leading-6 text-slate-500">
+                        Compartilhe uma opinião, sugestão ou experiência sobre a escola.
+                    </p>
+
+                </div>
+
+
+                <form action="index.php" method="POST" class="mt-7">
+
+                    <div>
+
+                        <label for="feedback-titulo" class="text-sm font-bold text-azul">
+                            Título do feedback
+                        </label>
+
+                        <input
+                            id="feedback-titulo"
+                            name="titulo"
+                            type="text"
+                            maxlength="70"
+                            required
+                            placeholder="Ex.: Uma sugestão para os intervalos"
+                            class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-laranja focus:ring-4 focus:ring-orange-100"
+                        >
+
+                    </div>
+
+
+                    <div class="mt-5">
+
+                        <label for="feedback-categoria" class="text-sm font-bold text-azul">
+                            Categoria
+                        </label>
+
+                        <select
+                            id="feedback-categoria"
+                            name="categoria"
+                            required
+                            class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-laranja focus:ring-4 focus:ring-orange-100"
+                        >
+                            <option value="Ensino">Ensino</option>
+                            <option value="Estrutura">Estrutura</option>
+                            <option value="Projetos">Projetos</option>
+                            <option value="Convivência">Convivência</option>
+                            <option value="Sugestão">Sugestão</option>
+                        </select>
+
+                    </div>
+
+
+                    <div class="mt-5">
+
+                        <label for="feedback-texto" class="text-sm font-bold text-azul">
+                            Seu feedback
+                        </label>
+
+                        <textarea
+                            id="feedback-texto"
+                            name="texto"
+                            rows="5"
+                            maxlength="500"
+                            required
+                            placeholder="Escreva sua opinião, sugestão ou experiência..."
+                            class="mt-2 w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 outline-none transition focus:border-laranja focus:ring-4 focus:ring-orange-100"
+                        ></textarea>
+
+                    </div>
+
+
+                    <div class="mt-5 flex items-start gap-3 rounded-xl bg-white p-4">
+
+                        <div class="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-orange-100 text-laranja">
+
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke-width="1.5"
+                                stroke="currentColor"
+                                class="h-6 w-6"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0-2.25-2.25Z"
+                                />
+                            </svg>
+
+                        </div>
+
+                        <p class="text-xs leading-5 text-slate-500">
+                            Sua identidade não será exibida junto ao feedback. Evite colocar dados pessoais na mensagem.
+                        </p>
+
+                    </div>
+
+
+                    <button
+                        type="submit"
+                        class="mt-6 w-full rounded-xl bg-azul px-6 py-3.5 font-bold text-white transition hover:bg-azul2"
+                    >
+                        Enviar feedback anônimo
+                    </button>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </section>
 
     <?php include './includes/footer.php'; ?>
 
@@ -704,6 +860,169 @@ $resultado_feedbacks = $conexao->query("SELECT * FROM feedbacks WHERE status = '
     <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
     <script src="./js/libras.js"></script>
 
+
+    <!-- carrossel dos feedbacks -->
+    <script>
+        const feedbackViewport = document.getElementById('feedbackViewport');
+        const feedbackTrack = document.getElementById('feedbackTrack');
+        const feedbackCards = document.querySelectorAll('.feedback-card');
+        const feedbackAnterior = document.getElementById('feedbackAnterior');
+        const feedbackProximo = document.getElementById('feedbackProximo');
+
+        let feedbackAtual = 0;
+        let feedbackAutoplay = null;
+
+        function quantidadeVisivel() {
+            if (window.innerWidth >= 1280) return 4;
+            if (window.innerWidth >= 640) return 2;
+            return 1;
+        }
+
+        function atualizarControles() {
+            const controles = document.getElementById('controlesFeedback');
+
+            if (!controles) return;
+
+            const visiveis = quantidadeVisivel();
+            const precisaNavegar = feedbackCards.length > visiveis;
+
+            controles.classList.toggle('hidden', !precisaNavegar);
+        }
+
+        function atualizarCarrossel() {
+            if (!feedbackTrack || !feedbackCards.length) {
+                atualizarControles();
+                return;
+            }
+
+            const visiveis = quantidadeVisivel();
+            const ultimoIndice = Math.max(0, feedbackCards.length - visiveis);
+
+            if (feedbackAtual > ultimoIndice) {
+                feedbackAtual = ultimoIndice;
+            }
+
+            const larguraCard = feedbackCards[0].getBoundingClientRect().width;
+            const estiloTrack = window.getComputedStyle(feedbackTrack);
+            const espacamento = parseFloat(estiloTrack.columnGap || estiloTrack.gap) || 0;
+            const deslocamento = feedbackAtual * (larguraCard + espacamento);
+
+            feedbackTrack.style.transform = `translateX(-${deslocamento}px)`;
+
+            atualizarControles();
+        }
+
+        function proximoFeedback() {
+            const visiveis = quantidadeVisivel();
+            const ultimoIndice = Math.max(0, feedbackCards.length - visiveis);
+
+            if (feedbackAtual >= ultimoIndice) {
+                feedbackAtual = 0;
+            } else {
+                feedbackAtual++;
+            }
+
+            atualizarCarrossel();
+        }
+
+        function feedbackAnteriorAcao() {
+            const visiveis = quantidadeVisivel();
+            const ultimoIndice = Math.max(0, feedbackCards.length - visiveis);
+
+            if (feedbackAtual <= 0) {
+                feedbackAtual = ultimoIndice;
+            } else {
+                feedbackAtual--;
+            }
+
+            atualizarCarrossel();
+        }
+
+        function iniciarFeedbackAutoplay() {
+            clearInterval(feedbackAutoplay);
+
+            if (feedbackCards.length <= quantidadeVisivel()) return;
+
+            feedbackAutoplay = setInterval(proximoFeedback, 5000);
+        }
+
+        if (feedbackAnterior) {
+            feedbackAnterior.addEventListener('click', () => {
+                feedbackAnteriorAcao();
+                iniciarFeedbackAutoplay();
+            });
+        }
+
+        if (feedbackProximo) {
+            feedbackProximo.addEventListener('click', () => {
+                proximoFeedback();
+                iniciarFeedbackAutoplay();
+            });
+        }
+
+        window.addEventListener('resize', () => {
+            atualizarCarrossel();
+            iniciarFeedbackAutoplay();
+        });
+
+        // O carrossel passa sozinho e pausa quando o mouse fica sobre os cards.
+        if (feedbackViewport) {
+            feedbackViewport.addEventListener('mouseenter', () => {
+                clearInterval(feedbackAutoplay);
+            });
+
+            feedbackViewport.addEventListener('mouseleave', () => {
+                iniciarFeedbackAutoplay();
+            });
+        }
+
+        atualizarCarrossel();
+        iniciarFeedbackAutoplay();
+
+
+        // modal do formulário
+        const modalFeedback = document.getElementById('modalFeedback');
+        const abrirFormularioFeedback = document.getElementById('abrirFormularioFeedback');
+        const fecharFormularioFeedback = document.getElementById('fecharFormularioFeedback');
+
+        function abrirFormulario() {
+            if (!modalFeedback) return;
+
+            modalFeedback.classList.remove('hidden');
+            modalFeedback.classList.add('flex');
+            document.body.classList.add('overflow-hidden');
+        }
+
+        function fecharFormulario() {
+            if (!modalFeedback) return;
+
+            modalFeedback.classList.add('hidden');
+            modalFeedback.classList.remove('flex');
+            document.body.classList.remove('overflow-hidden');
+        }
+
+        if (abrirFormularioFeedback) {
+            abrirFormularioFeedback.addEventListener('click', abrirFormulario);
+        }
+
+        if (fecharFormularioFeedback) {
+            fecharFormularioFeedback.addEventListener('click', fecharFormulario);
+        }
+
+        if (modalFeedback) {
+            modalFeedback.addEventListener('click', (event) => {
+                if (event.target === modalFeedback) {
+                    fecharFormulario();
+                }
+            });
+        }
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && modalFeedback && !modalFeedback.classList.contains('hidden')) {
+                fecharFormulario();
+            }
+        });
+    </script>
 
     <!-- carrossel da seção sobre -->
     <script>
@@ -766,4 +1085,4 @@ $resultado_feedbacks = $conexao->query("SELECT * FROM feedbacks WHERE status = '
 
 </body>
 
-</html>
+</html> 

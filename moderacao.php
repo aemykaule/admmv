@@ -29,7 +29,8 @@ $filtro = $_POST['filtro'] ?? $_GET['filtro'] ?? 'pendente';
 $filtrosPermitidos = [
     'pendente',
     'aprovado',
-    'recusado'
+    'recusado',
+    'inativo'
 ];
 
 if (!in_array($filtro, $filtrosPermitidos, true)) {
@@ -45,6 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $id = intval($_POST['id'] ?? 0);
     $acao = $_POST['acao'] ?? '';
+    $filtroAtual = $_POST['filtro'] ?? 'pendente';
 
     if ($id > 0) {
 
@@ -54,15 +56,63 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($acao === 'aprovar') {
 
-            $stmt = $conexao->prepare(
-                "UPDATE feedbacks
-                 SET status = 'aprovado'
-                 WHERE id = ?"
+        $novoStatus = $_POST['novo_status'] ?? '';
+
+
+        if (in_array($novoStatus, ['aprovado', 'recusado', 'inativo'], true)) {
+
+            // verifica o status atual antes de alterar
+            $stmtAtual = $conexao->prepare(
+                "SELECT status
+                FROM feedbacks
+                WHERE id = ?
+                AND arquivado = 0"
             );
 
-            $stmt->bind_param('i', $id);
-            $stmt->execute();
-            $stmt->close();
+            $stmtAtual->bind_param('i', $id);
+            $stmtAtual->execute();
+            $resultadoAtual = $stmtAtual->get_result();
+            $feedbackAtual = $resultadoAtual->fetch_assoc();
+            $stmtAtual->close();
+
+
+            // feedback inativo não pode mais ser reativado
+            if ($feedbackAtual && $feedbackAtual['status'] === 'inativo') {
+
+                $mensagem = 'inativo_sem_acao';
+
+            } elseif ($feedbackAtual) {
+
+                $stmt = $conexao->prepare(
+                    "UPDATE feedbacks
+                    SET status = ?
+                    WHERE id = ?
+                    AND arquivado = 0"
+                );
+
+                $stmt->bind_param('si', $novoStatus, $id);
+                $stmt->execute();
+                $alterado = $stmt->affected_rows > 0;
+                $stmt->close();
+
+
+                if ($alterado) {
+
+                    if ($novoStatus === 'aprovado') {
+                        $mensagem = 'aprovado';
+                    } elseif ($novoStatus === 'recusado') {
+                        $mensagem = 'recusado';
+                    } else {
+                        $mensagem = 'inativo';
+                    }
+
+                } else {
+                    $mensagem = 'erro';
+                }
+
+            } else {
+                $mensagem = 'erro';
+            }
 
             header(
                 'Location: moderacao.php?filtro=' .
@@ -134,7 +184,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $quantidades = [
     'pendente' => 0,
     'aprovado' => 0,
-    'recusado' => 0
+    'recusado' => 0,
+    'inativo' => 0
 ];
 
 $resultadoContagem = $conexao->query(
@@ -211,6 +262,11 @@ $resultadoFeedbacks = $stmt->get_result();
     <!-- Tailwind -->
 
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    >
 
 
     <script>
