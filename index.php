@@ -1,1039 +1,1079 @@
-<!DOCTYPE html>
+
 <?php
-// 1. Conecta ao phpMyAdmin
-include './conexao.php';
+session_start();
 
-// 2. Processa o envio se o formulário for submetido
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $titulo = mysqli_real_escape_string($conexao, $_POST['titulo']);
-    $categoria = mysqli_real_escape_string($conexao, $_POST['categoria']);
-    $texto = mysqli_real_escape_string($conexao, $_POST['texto']);
+require_once __DIR__ . '/conexao.php';
 
-    if (!empty($titulo) && !empty($categoria) && !empty($texto)) {
-        $sql = "INSERT INTO feedbacks (titulo, categoria, texto, status, arquivado) VALUES ('$titulo', '$categoria', '$texto', 'pendente', 0)";
-        if ($conexao->query($sql) === TRUE) {
-            header("Location: index.php#feedbacks");
-            exit();
-        }
+/*
+|--------------------------------------------------------------------------
+| Conteúdo editável
+|--------------------------------------------------------------------------
+*/
+
+$conteudosSite = [];
+
+$resultadoConteudos = $conexao->query(
+    "SELECT chave, valor FROM conteudos_site"
+);
+
+if ($resultadoConteudos) {
+    while ($linha = $resultadoConteudos->fetch_assoc()) {
+        $conteudosSite[$linha['chave']] = $linha['valor'];
     }
 }
 
-// 3. Puxa os feedbacks para renderizar na listagem lateral
-$resultado_feedbacks = $conexao->query("SELECT * FROM feedbacks WHERE status = 'aprovado' AND arquivado = 0 ORDER BY data_criacao DESC");
+/*
+|--------------------------------------------------------------------------
+| Textos e imagens
+|--------------------------------------------------------------------------
+*/
+
+function conteudoSite(string $chave, string $padrao = ''): string
+{
+    global $conteudosSite;
+
+    return $conteudosSite[$chave] ?? $padrao;
+}
+
+function imagemSite(string $chave, string $padrao): string
+{
+    $imagem = conteudoSite($chave, $padrao);
+
+    // Aceita somente caminhos relativos de imagens do próprio site.
+    if (
+        !preg_match(
+            '~^\.?/img/[a-zA-Z0-9_./-]+\.(jpg|jpeg|png|webp|gif)$~i',
+            $imagem
+        ) ||
+        str_contains($imagem, '..')
+    ) {
+        return $padrao;
+    }
+
+    return $imagem;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Exibição segura de texto com cores personalizadas
+|--------------------------------------------------------------------------
+| O editor pode salvar formatação como:
+| <span style="color:#F58220">Texto colorido</span>
+*/
+
+function textoSite(string $chave, string $padrao = ''): string
+{
+    $texto = conteudoSite($chave, $padrao);
+
+    // Escapa todo o conteúdo antes de permitir formatação segura.
+    $texto = htmlspecialchars($texto, ENT_QUOTES, 'UTF-8');
+
+    // Permite somente a formatação de cor criada pelo editor.
+    $texto = preg_replace_callback(
+        '~&lt;span\s+style=&quot;color:\s*(#[0-9a-fA-F]{6});?&quot;&gt;(.*?)&lt;/span&gt;~is',
+        static function ($match) {
+            return '<span style="color:' .
+                $match[1] .
+                '">' .
+                $match[2] .
+                '</span>';
+        },
+        $texto
+    );
+
+    // Permite quebras de linha sem permitir HTML arbitrário.
+    return nl2br($texto, false);
+}
+
+function hSite(string $valor): string
+{
+    return htmlspecialchars($valor, ENT_QUOTES, 'UTF-8');
+}
+
+/*
+|--------------------------------------------------------------------------
+| Envio de feedback
+|--------------------------------------------------------------------------
+*/
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $titulo = trim($_POST['titulo'] ?? '');
+    $categoria = trim($_POST['categoria'] ?? '');
+    $texto = trim($_POST['texto'] ?? '');
+
+    $categoriasPermitidas = [
+        'Ensino',
+        'Estrutura',
+        'Projetos',
+        'Convivência',
+        'Sugestão'
+    ];
+
+    if (
+        $titulo !== '' &&
+        $texto !== '' &&
+        in_array($categoria, $categoriasPermitidas, true) &&
+        mb_strlen($titulo, 'UTF-8') <= 70 &&
+        mb_strlen($texto, 'UTF-8') <= 500
+    ) {
+        $stmt = $conexao->prepare(
+            "INSERT INTO feedbacks
+                (titulo, categoria, texto, status, arquivado)
+             VALUES (?, ?, ?, 'pendente', 0)"
+        );
+
+        $stmt->bind_param('sss', $titulo, $categoria, $texto);
+
+        if ($stmt->execute()) {
+            $stmt->close();
+
+            header('Location: index.php#feedbacks');
+            exit;
+        }
+
+        $stmt->close();
+    }
+
+    header('Location: index.php#feedbacks');
+    exit;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Feedbacks aprovados
+|--------------------------------------------------------------------------
+*/
+
+$resultado_feedbacks = $conexao->query(
+    "SELECT *
+     FROM feedbacks
+     WHERE status = 'aprovado'
+       AND arquivado = 0
+     ORDER BY data_criacao DESC"
+);
+
+$feedbacksCarrossel = [];
+
+if ($resultado_feedbacks) {
+    while ($linha = $resultado_feedbacks->fetch_assoc()) {
+        $feedbacksCarrossel[] = $linha;
+    }
+}
 ?>
+<!DOCTYPE html>
 <html lang="pt-BR" class="scroll-smooth">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Ensino Médio Integrado - Sesc Senac Caiobá</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="./js/tailwind.config.js"></script>
+
+    <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    >
 </head>
 
 <?php include './includes/header.php'; ?>
 
 <body class="bg-white text-slate-800">
 
-    <!-- início -->
-    <section class="min-h-[calc(100vh-73px)] flex flex-col justify-center relative overflow-hidden bg-azul px-5 py-24 text-white">
+<!-- INÍCIO -->
+<section class="relative flex min-h-[calc(100vh-73px)] flex-col justify-center overflow-hidden bg-azul px-5 py-24 text-white">
 
-        <div class="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-laranja/10"></div>
-        <div class="absolute -bottom-40 -left-20 h-96 w-96 rounded-full bg-blue-300/10"></div>
+    <div class="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-laranja/10"></div>
+    <div class="absolute -bottom-40 -left-20 h-96 w-96 rounded-full bg-blue-300/10"></div>
 
-        <div class="relative mx-auto grid max-w-7xl items-center gap-14 lg:grid-cols-2">
+    <div class="relative mx-auto grid max-w-7xl items-center gap-14 lg:grid-cols-2">
 
-            <div>
-                <span class="inline-block rounded-full border border-white/10 bg-white/10 px-4 py-2 text-sm font-semibold text-orange-200">
-                    Ensino Médio Integrado ao Técnico
-                </span>
+        <div>
+            <span class="inline-block rounded-full border border-white/10 bg-white/10 px-4 py-2 text-sm font-semibold text-orange-200">
+                <?= textoSite('inicio_etiqueta', 'Ensino Médio Integrado ao Técnico') ?>
+            </span>
 
-                <h1 class="mt-6 text-5xl font-black leading-tight md:text-6xl">
-                    Formação completa em
-                    <span class="text-laranja">Caiobá.</span>
-                </h1>
+            <h1 class="mt-6 text-5xl font-black leading-tight md:text-6xl">
+                <?= textoSite('inicio_titulo', 'Formação completa em Caiobá.') ?>
+            </h1>
 
-                <p class="mt-6 max-w-xl text-lg leading-8 text-blue-100">
-                    No Sesc Senac Caiobá, o Ensino Médio é integrado ao curso Técnico em
-                    Informática para Internet, unindo formação geral, tecnologia e preparação
-                    para o mundo do trabalho.
-                </p>
+            <p class="mt-6 max-w-xl text-lg leading-8 text-blue-100">
+                <?= textoSite(
+                    'inicio_descricao',
+                    'No Sesc Senac Caiobá, o Ensino Médio é integrado ao curso Técnico em Informática para Internet, unindo formação geral, tecnologia e preparação para o mundo do trabalho.'
+                ) ?>
+            </p>
 
-                <div class="mt-8 flex flex-wrap gap-3">
-                    <a
-                        href="#escola"
-                        class="rounded-xl bg-laranja px-6 py-3 font-bold transition hover:bg-laranjaEscuro">
-                        Conheça a unidade
-                    </a>
-
-                </div>
-
-                <div class="mt-12 grid max-w-xl grid-cols-3 gap-5 border-t border-white/15 pt-6">
-                    <div>
-                        <strong class="text-2xl text-laranja">3 anos</strong>
-                        <p class="mt-1 text-xs text-blue-200">Duração do curso</p>
-                    </div>
-
-                    <div>
-                        <strong class="text-2xl text-laranja">3.200 h</strong>
-                        <p class="mt-1 text-xs text-blue-200">Carga horária total</p>
-                    </div>
-
-                    <div>
-                        <strong class="text-2xl text-laranja">Presencial</strong>
-                        <p class="mt-1 text-xs text-blue-200">Modalidade</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="overflow-hidden rounded-2xl bg-white p-2 shadow-2xl">
-                <div class="aspect-video overflow-hidden rounded-xl">
-                    <iframe
-                        class="h-full w-full"
-                        src="https://www.youtube.com/embed/5tvsNooQGDw"
-                        title="Ensino Médio Integrado ao Técnico Sesc Senac PR"
-                        frameborder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                        allowfullscreen>
-                    </iframe>
-                </div>
-            </div>
-
-        </div>
-    </section>
-
-    <!-- sobre -->
-    <section id="escola" class="min-h-[calc(100vh-73px)] flex flex-col justify-center scroll-mt-[73px] px-5 py-20">
-
-        <div class="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-2">
-
-            <div id="carousel-escola" class="group relative overflow-hidden rounded-2xl shadow-xl">
-
-                <!-- slides -->
-                <div class="relative h-[420px]">
-                    <img
-                        src="./img/iscola.png"
-                        alt="Unidade Sesc Senac Caiobá"
-                        class="carousel-slide absolute inset-0 h-full w-full object-cover opacity-100 transition-opacity duration-700">
-
-                    <img
-                        src="./img/volei-sesc.png"
-                        alt="Atividade esportiva no ginásio do Sesc"
-                        class="carousel-slide absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-700">
-
-                    <img
-                        src="./img/formatura-sesc.png"
-                        alt="Formatura dos estudantes do Ensino Médio Integrado"
-                        class="carousel-slide absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-700">
-
-                    <img
-                        src="./img/fachada-sesc.png"
-                        alt="Fachada da unidade Sesc Senac"
-                        class="carousel-slide absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-700">
-                </div>
-
-                <!-- seta esquerda -->
-                <button
-                    type="button"
-                    id="carousel-prev"
-                    aria-label="Imagem anterior"
-                    class="absolute left-4 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-black/35 text-2xl text-white opacity-0 backdrop-blur-sm transition hover:bg-black/55 group-hover:opacity-100">
-                    &#10094;
-                </button>
-
-                <!-- seta direita -->
-                <button
-                    type="button"
-                    id="carousel-next"
-                    aria-label="Próxima imagem"
-                    class="absolute right-4 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-black/35 text-2xl text-white opacity-0 backdrop-blur-sm transition hover:bg-black/55 group-hover:opacity-100">
-                    &#10095;
-                </button>
-
-                <!-- indicadores -->
-                <div class="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
-                    <button type="button" aria-label="Ir para imagem 1" class="carousel-dot h-2.5 w-8 rounded-full bg-white transition"></button>
-                    <button type="button" aria-label="Ir para imagem 2" class="carousel-dot h-2.5 w-2.5 rounded-full bg-white/50 transition"></button>
-                    <button type="button" aria-label="Ir para imagem 3" class="carousel-dot h-2.5 w-2.5 rounded-full bg-white/50 transition"></button>
-                    <button type="button" aria-label="Ir para imagem 4" class="carousel-dot h-2.5 w-2.5 rounded-full bg-white/50 transition"></button>
-                </div>
-
-            </div>
-
-            <div>
-                <span class="text-sm font-bold uppercase tracking-wider text-laranja">
-                    Sesc Senac Caiobá
-                </span>
-
-                <h2 class="mt-3 text-4xl font-black text-azul">
-                    Ensino Médio e formação técnica no mesmo percurso
-                </h2>
-
-                <p class="mt-6 leading-8 text-slate-500">
-                    A unidade de Caiobá, em Matinhos, oferece o Técnico em Informática para Internet
-                    integrado ao Ensino Médio. Ao longo dos três anos, o estudante desenvolve a
-                    formação da Educação Básica junto com competências profissionais da área de tecnologia.
-                </p>
-
-                <p class="mt-4 leading-8 text-slate-500">
-                    A proposta valoriza o protagonismo dos estudantes, o contato com a prática profissional,
-                    o preparo para vestibulares e Enem e uma formação crítica, criativa e responsável.
-                </p>
-
-                <div class="mt-6 rounded-xl bg-fundo p-5">
-                    <p class="text-sm font-bold text-azul">Unidade Sesc Caiobá</p>
-                    <p class="mt-2 text-sm leading-6 text-slate-600">
-                        Rua Dr. José Pinto Rebelo Júnior, 91 — Caiobá, Matinhos/PR.
-                    </p>
-                </div>
-
+            <div class="mt-8 flex flex-wrap gap-3">
                 <a
-                    href="#ensino"
-                    class="mt-7 inline-block rounded-lg bg-azul px-6 py-3 font-bold text-white transition hover:bg-azul2">
-                    Veja como funciona
+                    href="#escola"
+                    class="rounded-xl bg-laranja px-6 py-3 font-bold transition hover:bg-laranjaEscuro"
+                >
+                    Conheça a unidade
                 </a>
             </div>
 
-        </div>
-    </section>
-
-    <!-- objetivo e diferenciais -->
-    <section class="min-h-[calc(100vh-73px)] flex flex-col justify-center bg-fundo px-5 py-20">
-
-        <div class="mx-auto max-w-7xl">
-
-            <div class="text-center">
-                <span class="inline-block rounded-full bg-orange-100 px-4 py-2 text-xs font-bold text-laranjaEscuro">
-                    Proposta educacional
-                </span>
-
-                <h2 class="mt-4 text-4xl font-black text-azul">
-                    Objetivo do programa
-                </h2>
-
-                <p class="mx-auto mt-4 max-w-3xl leading-7 text-slate-500">
-                    A formação busca desenvolver cidadania, acesso à cultura, crescimento pessoal e
-                    preparação profissional, fortalecendo competências socioemocionais e o protagonismo juvenil.
-                </p>
-            </div>
-
-            <div class="mt-12 grid gap-6 lg:grid-cols-2">
-
-                <div class="rounded-3xl bg-azul p-10 text-white">
-                    <span class="text-sm font-bold uppercase tracking-wider text-orange-300">
-                        Formação integral
-                    </span>
-
-                    <h3 class="mt-4 text-3xl font-black">
-                        Aprender, participar e se preparar para novos caminhos.
-                    </h3>
-
-                    <p class="mt-5 leading-8 text-blue-100">
-                        O currículo integra conhecimentos do Ensino Médio e da Educação Profissional,
-                        estimulando uma participação ativa, crítica, criativa e responsável na sociedade.
-                    </p>
+            <div class="mt-12 grid max-w-xl grid-cols-3 gap-5 border-t border-white/15 pt-6">
+                <div>
+                    <strong class="text-2xl text-laranja">3 anos</strong>
+                    <p class="mt-1 text-xs text-blue-200">Duração do curso</p>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="rounded-2xl bg-white p-7 shadow-sm">
-                        <div class="h-1 w-10 bg-laranja"></div>
-                        <h3 class="mt-5 font-black text-azul">Protagonismo</h3>
-                        <p class="mt-2 text-sm leading-6 text-slate-500">
-                            O estudante participa ativamente do próprio processo de aprendizagem.
-                        </p>
-                    </div>
-
-                    <div class="rounded-2xl bg-white p-7 shadow-sm">
-                        <div class="h-1 w-10 bg-laranja"></div>
-                        <h3 class="mt-5 font-black text-azul">Cidadania</h3>
-                        <p class="mt-2 text-sm leading-6 text-slate-500">
-                            Formação humana conectada à cultura, ao senso coletivo e à sociedade.
-                        </p>
-                    </div>
-
-                    <div class="rounded-2xl bg-white p-7 shadow-sm">
-                        <div class="h-1 w-10 bg-laranja"></div>
-                        <h3 class="mt-5 font-black text-azul">Prática</h3>
-                        <p class="mt-2 text-sm leading-6 text-slate-500">
-                            Contato direto com atividades e conhecimentos da formação profissional.
-                        </p>
-                    </div>
-
-                    <div class="rounded-2xl bg-white p-7 shadow-sm">
-                        <div class="h-1 w-10 bg-laranja"></div>
-                        <h3 class="mt-5 font-black text-azul">Futuro</h3>
-                        <p class="mt-2 text-sm leading-6 text-slate-500">
-                            Preparação para vestibulares, Enem e possibilidades no mercado de trabalho.
-                        </p>
-                    </div>
+                <div>
+                    <strong class="text-2xl text-laranja">3.200 h</strong>
+                    <p class="mt-1 text-xs text-blue-200">Carga horária total</p>
                 </div>
 
+                <div>
+                    <strong class="text-2xl text-laranja">Presencial</strong>
+                    <p class="mt-1 text-xs text-blue-200">Modalidade</p>
+                </div>
             </div>
         </div>
-    </section>
 
-    <!-- ensino -->
-    <section id="ensino" class="min-h-[calc(100vh-73px)] flex flex-col justify-center scroll-mt-[73px] px-5 py-20">
+        <div class="overflow-hidden rounded-2xl bg-white p-2 shadow-2xl">
+            <div class="aspect-video overflow-hidden rounded-xl">
+                <iframe
+                    class="h-full w-full"
+                    src="https://www.youtube.com/embed/5tvsNooQGDw"
+                    title="Ensino Médio Integrado ao Técnico Sesc Senac PR"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowfullscreen
+                ></iframe>
+            </div>
+        </div>
 
-        <div class="mx-auto max-w-7xl">
+    </div>
+</section>
 
-            <div class="max-w-3xl">
-                <span class="text-sm font-bold uppercase tracking-wider text-laranja">
-                    Como funciona
-                </span>
+<!-- ESCOLA -->
+<section id="escola" class="flex min-h-[calc(100vh-73px)] scroll-mt-[73px] flex-col justify-center px-5 py-20">
 
-                <h2 class="mt-3 text-4xl font-black text-azul">
-                    Ensino integrado e aprendizagem na prática
-                </h2>
+    <div class="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-2">
 
-                <p class="mt-5 leading-8 text-slate-500">
-                    O programa combina o currículo do Ensino Médio com a formação técnica e utiliza
-                    estratégias que aproximam teoria, projetos, pesquisa e situações profissionais.
+        <div id="carousel-escola" class="group relative overflow-hidden rounded-2xl shadow-xl">
+            <div class="relative h-[420px]">
+
+                <?php
+                $imagensEscola = [
+                    ['imagem_escola_1', './img/iscola.png', 'Unidade Sesc Senac Caiobá'],
+                    ['imagem_escola_2', './img/volei-sesc.png', 'Atividade esportiva no ginásio'],
+                    ['imagem_escola_3', './img/formatura-sesc.png', 'Formatura dos estudantes'],
+                    ['imagem_escola_4', './img/fachada-sesc.png', 'Fachada da unidade']
+                ];
+                ?>
+
+                <?php foreach ($imagensEscola as $i => $imagem): ?>
+                    <img
+                        src="<?= hSite(imagemSite($imagem[0], $imagem[1])) ?>"
+                        alt="<?= hSite($imagem[2]) ?>"
+                        class="carousel-slide absolute inset-0 h-full w-full object-cover transition-opacity duration-700 <?= $i === 0 ? 'opacity-100' : 'opacity-0' ?>"
+                    >
+                <?php endforeach; ?>
+
+            </div>
+
+            <button
+                type="button"
+                id="carousel-prev"
+                aria-label="Imagem anterior"
+                class="absolute left-4 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-black/35 text-2xl text-white opacity-0 transition hover:bg-black/55 group-hover:opacity-100"
+            >
+                <i class="bi bi-chevron-left"></i>
+            </button>
+
+            <button
+                type="button"
+                id="carousel-next"
+                aria-label="Próxima imagem"
+                class="absolute right-4 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-black/35 text-2xl text-white opacity-0 transition hover:bg-black/55 group-hover:opacity-100"
+            >
+                <i class="bi bi-chevron-right"></i>
+            </button>
+
+            <div class="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
+                <?php for ($i = 0; $i < 4; $i++): ?>
+                    <button
+                        type="button"
+                        aria-label="Ir para imagem <?= $i + 1 ?>"
+                        class="carousel-dot h-2.5 rounded-full transition <?= $i === 0 ? 'w-8 bg-white' : 'w-2.5 bg-white/50' ?>"
+                    ></button>
+                <?php endfor; ?>
+            </div>
+        </div>
+
+        <div>
+            <span class="text-sm font-bold uppercase tracking-wider text-laranja">
+                Sesc Senac Caiobá
+            </span>
+
+            <h2 class="mt-3 text-4xl font-black text-azul">
+                <?= textoSite(
+                    'escola_titulo',
+                    'Ensino Médio e formação técnica no mesmo percurso'
+                ) ?>
+            </h2>
+
+            <p class="mt-6 leading-8 text-slate-500">
+                <?= textoSite(
+                    'escola_descricao',
+                    'A unidade de Caiobá, em Matinhos, oferece o Técnico em Informática para Internet integrado ao Ensino Médio. Ao longo dos três anos, o estudante desenvolve a formação da Educação Básica junto com competências profissionais da área de tecnologia.'
+                ) ?>
+            </p>
+
+            <p class="mt-4 leading-8 text-slate-500">
+                A proposta valoriza o protagonismo dos estudantes, o contato com a prática profissional,
+                o preparo para vestibulares e Enem e uma formação crítica, criativa e responsável.
+            </p>
+
+            <div class="mt-6 rounded-xl bg-fundo p-5">
+                <p class="text-sm font-bold text-azul">Unidade Sesc Caiobá</p>
+                <p class="mt-2 text-sm leading-6 text-slate-600">
+                    Rua Dr. José Pinto Rebelo Júnior, 91 — Caiobá, Matinhos/PR.
                 </p>
             </div>
 
-            <div class="mt-12 grid gap-6 md:grid-cols-3">
-
-                <article class="group overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-1 hover:shadow-xl">
-                    <div class="overflow-hidden">
-                        <img src="./img/ensino-medio-integrado-sesc-pr.jpg" alt="" class="h-52 w-full object-cover transition duration-300 group-hover:scale-105">
-                    </div>
-                    <div class="p-8">
-                        <span class="text-xs font-bold uppercase tracking-wider text-laranja"> 01</span>
-                        <h3 class="mt-3 text-xl font-black text-azul"> Ensino Médio </h3>
-                        <p class="mt-3 text-sm leading-7 text-slate-500">
-                            Formação geral com os componentes da Educação Básica e preparação para osprincipais vestibulares e Enem.</p>
-                    </div>
-                </article>
-
-                <article class="group overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-1 hover:shadow-xl">
-                    <div class="overflow-hidden">
-                        <img src="./img/informaticaaa.png" alt="" class="h-52 w-full object-cover transition duration-300 group-hover:scale-105">
-                    </div>
-                    <div class="p-8">
-                        <span class="text-xs font-bold uppercase tracking-wider text-laranja">02</span>
-                        <h3 class="mt-3 text-xl font-black text-azul">Formação técnica</h3>
-                        <p class="mt-3 text-sm leading-7 text-slate-500">
-                            Conteúdos profissionais de Informática para Internet desenvolvidos junto ao percurso do Ensino Médio.
-                        </p>
-                    </div>
-                </article>
-
-                <article class="group overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-1 hover:shadow-xl">
-                    <div class="overflow-hidden">
-                        <img src="./img/ZOOLITO.jpg" alt="" class="h-52 w-full object-cover transition duration-300 group-hover:scale-105">
-                    </div>
-                    <div class="p-8">
-                        <span class="text-xs font-bold uppercase tracking-wider text-laranja">03</span>
-                        <h3 class="mt-3 text-xl font-black text-azul">Metodologias ativas</h3>
-                        <p class="mt-3 text-sm leading-7 text-slate-500">
-                            Projetos, atividades interdisciplinares e experiências que colocam o aluno como participante do processo de aprendizagem.
-                        </p>
-                    </div>
-                </article>
-
-            </div>
+            <a
+                href="#ensino"
+                class="mt-7 inline-block rounded-lg bg-azul px-6 py-3 font-bold text-white transition hover:bg-azul2"
+            >
+                Veja como funciona
+            </a>
         </div>
-    </section>
 
-    <!-- curso técnico -->
-    <section id="cursos" class="min-h-[calc(100vh-73px)] flex flex-col justify-center scroll-mt-[73px] bg-fundo px-5 py-20">
+    </div>
+</section>
 
-        <div class="mx-auto max-w-7xl">
+<!-- OBJETIVO E DIFERENCIAIS -->
+<section class="flex min-h-[calc(100vh-73px)] flex-col justify-center bg-fundo px-5 py-20">
 
-            <div class="text-center">
-                <span class="text-sm font-bold uppercase tracking-wider text-laranja">
-                    Formação profissional em Caiobá
+    <div class="mx-auto max-w-7xl">
+
+        <div class="text-center">
+            <span class="inline-block rounded-full bg-orange-100 px-4 py-2 text-xs font-bold text-laranjaEscuro">
+                Proposta educacional
+            </span>
+
+            <h2 class="mt-4 text-4xl font-black text-azul">
+                <?= textoSite('objetivo_titulo', 'Objetivo do programa') ?>
+            </h2>
+
+            <p class="mx-auto mt-4 max-w-3xl leading-7 text-slate-500">
+                <?= textoSite(
+                    'objetivo_descricao',
+                    'A formação busca desenvolver cidadania, acesso à cultura, crescimento pessoal e preparação profissional, fortalecendo competências socioemocionais e o protagonismo juvenil.'
+                ) ?>
+            </p>
+        </div>
+
+        <div class="mt-12 grid gap-6 lg:grid-cols-2">
+
+            <div class="rounded-3xl bg-azul p-10 text-white">
+                <span class="text-sm font-bold uppercase tracking-wider text-orange-300">
+                    Formação integral
                 </span>
 
-                <h2 class="mt-3 text-4xl font-black text-azul">
-                    Técnico em Informática para Internet
-                </h2>
+                <h3 class="mt-4 text-3xl font-black">
+                    Aprender, participar e se preparar para novos caminhos.
+                </h3>
 
-                <p class="mx-auto mt-4 max-w-3xl leading-7 text-slate-500">
-                    Em Caiobá, esta é a formação técnica integrada ao Ensino Médio. O curso desenvolve
-                    competências para criar e colocar aplicações para internet em funcionamento.
+                <p class="mt-5 leading-8 text-blue-100">
+                    O currículo integra conhecimentos do Ensino Médio e da Educação Profissional,
+                    estimulando uma participação ativa, crítica, criativa e responsável na sociedade.
                 </p>
             </div>
 
-            <div class="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <div class="grid grid-cols-2 gap-4">
+                <?php
+                $diferenciais = [
+                    ['Protagonismo', 'O estudante participa ativamente do próprio processo de aprendizagem.'],
+                    ['Cidadania', 'Formação humana conectada à cultura, ao senso coletivo e à sociedade.'],
+                    ['Prática', 'Contato direto com atividades e conhecimentos da formação profissional.'],
+                    ['Futuro', 'Preparação para vestibulares, Enem e possibilidades no mercado de trabalho.']
+                ];
+                ?>
 
-                <article class="rounded-2xl bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
-                    <span class="text-xs font-bold uppercase tracking-wider text-laranja">Planejamento</span>
-                    <h3 class="mt-3 text-xl font-black text-azul">Estruturar</h3>
-                    <p class="mt-3 text-sm leading-6 text-slate-500">
-                        Organizar a estrutura e os elementos necessários para aplicações web.
-                    </p>
-                </article>
-
-                <article class="rounded-2xl bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
-                    <span class="text-xs font-bold uppercase tracking-wider text-laranja">Desenvolvimento</span>
-                    <h3 class="mt-3 text-xl font-black text-azul">Codificar</h3>
-                    <p class="mt-3 text-sm leading-6 text-slate-500">
-                        Desenvolver soluções para internet utilizando conhecimentos de programação.
-                    </p>
-                </article>
-
-                <article class="rounded-2xl bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
-                    <span class="text-xs font-bold uppercase tracking-wider text-laranja">Web</span>
-                    <h3 class="mt-3 text-xl font-black text-azul">Publicar</h3>
-                    <p class="mt-3 text-sm leading-6 text-slate-500">
-                        Preparar e disponibilizar aplicações para uso em ambientes de internet.
-                    </p>
-                </article>
-
-                <article class="rounded-2xl bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
-                    <span class="text-xs font-bold uppercase tracking-wider text-laranja">Qualidade</span>
-                    <h3 class="mt-3 text-xl font-black text-azul">Testar</h3>
-                    <p class="mt-3 text-sm leading-6 text-slate-500">
-                        Verificar o funcionamento das aplicações e identificar possíveis melhorias.
-                    </p>
-                </article>
-
+                <?php foreach ($diferenciais as $diferencial): ?>
+                    <div class="rounded-2xl bg-white p-7 shadow-sm">
+                        <div class="h-1 w-10 bg-laranja"></div>
+                        <h3 class="mt-5 font-black text-azul">
+                            <?= hSite($diferencial[0]) ?>
+                        </h3>
+                        <p class="mt-2 text-sm leading-6 text-slate-500">
+                            <?= hSite($diferencial[1]) ?>
+                        </p>
+                    </div>
+                <?php endforeach; ?>
             </div>
+
         </div>
-    </section>
+    </div>
+</section>
 
-    <!-- projetos -->
-    <section id="feiras" class="min-h-[calc(100vh-73px)] flex flex-col justify-center scroll-mt-[73px] px-5 py-20">
+<!-- ENSINO -->
+<section id="ensino" class="flex min-h-[calc(100vh-73px)] scroll-mt-[73px] flex-col justify-center px-5 py-20">
 
-        <div class="mx-auto max-w-7xl">
+    <div class="mx-auto max-w-7xl">
 
+        <div class="max-w-3xl">
+            <span class="text-sm font-bold uppercase tracking-wider text-laranja">
+                Como funciona
+            </span>
 
-            <div class="mx-auto max-w-7xl">
+            <h2 class="mt-3 text-4xl font-black text-azul">
+                <?= textoSite(
+                    'ensino_titulo',
+                    'Ensino integrado e aprendizagem na prática'
+                ) ?>
+            </h2>
 
-                <div class="grid items-center gap-12 lg:grid-cols-2">
+            <p class="mt-5 leading-8 text-slate-500">
+                O programa combina o currículo do Ensino Médio com a formação técnica e utiliza
+                estratégias que aproximam teoria, projetos, pesquisa e situações profissionais.
+            </p>
+        </div>
 
-                    <div>
-                        <span class="text-sm font-bold uppercase tracking-wider text-laranja">
-                            Projetos reais de Caiobá
+        <div class="mt-12 grid gap-6 md:grid-cols-3">
+
+            <?php
+            $cardsEnsino = [
+                [
+                    'imagem_ensino_1',
+                    './img/ensino-medio-integrado-sesc-pr.jpg',
+                    '01',
+                    'Ensino Médio',
+                    'Formação geral com os componentes da Educação Básica e preparação para os principais vestibulares e Enem.'
+                ],
+                [
+                    'imagem_ensino_2',
+                    './img/informaticaaa.png',
+                    '02',
+                    'Formação técnica',
+                    'Conteúdos profissionais de Informática para Internet desenvolvidos junto ao percurso do Ensino Médio.'
+                ],
+                [
+                    'imagem_ensino_3',
+                    './img/ZOOLITO.jpg',
+                    '03',
+                    'Metodologias ativas',
+                    'Projetos, atividades interdisciplinares e experiências que colocam o aluno como participante do processo de aprendizagem.'
+                ]
+            ];
+            ?>
+
+            <?php foreach ($cardsEnsino as $card): ?>
+                <article class="group overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-1 hover:shadow-xl">
+                    <div class="overflow-hidden">
+                        <img
+                            src="<?= hSite(imagemSite($card[0], $card[1])) ?>"
+                            alt="<?= hSite($card[3]) ?>"
+                            class="h-52 w-full object-cover transition duration-300 group-hover:scale-105"
+                        >
+                    </div>
+
+                    <div class="p-8">
+                        <span class="text-xs font-bold uppercase tracking-wider text-laranja">
+                            <?= hSite($card[2]) ?>
                         </span>
 
-                        <h2 class="mt-3 text-4xl font-black text-azul">
-                            Ciência, tecnologia e realidade local
-                        </h2>
+                        <h3 class="mt-3 text-xl font-black text-azul">
+                            <?= hSite($card[3]) ?>
+                        </h3>
 
-                        <p class="mt-5 leading-8 text-slate-500">
-                            Em 2025, estudantes do Sesc Senac Caiobá/Matinhos participaram de feiras e
-                            eventos científicos com trabalhos ligados à tecnologia, história, inclusão,
-                            meio ambiente e cultura regional.
+                        <p class="mt-3 text-sm leading-7 text-slate-500">
+                            <?= hSite($card[4]) ?>
                         </p>
-
-                        <div class="mt-7 space-y-4">
-                            <div class="border-l-4 border-laranja pl-4">
-                                <h3 class="font-bold text-azul">Inovação e Inclusão</h3>
-                                <p class="mt-1 text-sm leading-6 text-slate-500">
-                                    Projeto de modelagem e impressão 3D para acessibilidade em museus,
-                                    vencedor do 1º lugar em Tecnologia no Concurso Sementes do Futuro.
-                                </p>
-                            </div>
-
-                            <div class="border-l-4 border-laranja pl-4">
-                                <h3 class="font-bold text-azul">Terra Indígena Yanomami</h3>
-                                <p class="mt-1 text-sm leading-6 text-slate-500">
-                                    Pesquisa sobre os impactos do garimpo ilegal, reconhecida com Menção
-                                    Honrosa da Funai na FECCI.
-                                </p>
-                            </div>
-
-                            <div class="border-l-4 border-laranja pl-4">
-                                <h3 class="font-bold text-azul">Arqueologia Digital</h3>
-                                <p class="mt-1 text-sm leading-6 text-slate-500">
-                                    Trabalho com modelagem e impressão 3D de zoólitos, conectado à história
-                                    e ao patrimônio do litoral paranaense.
-                                </p>
-                            </div>
-
-                            <div class="border-l-4 border-laranja pl-4">
-                                <h3 class="font-bold text-azul">Cinema de Matinhos</h3>
-                                <p class="mt-1 text-sm leading-6 text-slate-500">
-                                    Uma das primeiras pesquisas sobre a história do cinema na cidade, com registro de filmes, cartazes e entrevistas,
-                                    começou aqui.
-                                </p>
-                            </div>
-                        </div>
                     </div>
+                </article>
+            <?php endforeach; ?>
 
-                    <div class="grid grid-cols-2 gap-4">
-                        <img
-                            src="./img/feira-cientifica-sesc-senac.jpg"
-                            alt="Participantes do Sesc Senac em evento científico"
-                            class="h-80 w-full rounded-2xl object-cover">
+        </div>
+    </div>
+</section>
 
-                        <img
-                            src="./img/sesc-senac-evento-cientifico.jpeg"
-                            alt="Representantes do Sesc e Senac em evento científico"
-                            class="mt-10 h-80 w-full rounded-2xl object-cover">
-                    </div>
+<!-- CURSO TÉCNICO -->
+<section id="cursos" class="flex min-h-[calc(100vh-73px)] scroll-mt-[73px] flex-col justify-center bg-fundo px-5 py-20">
 
-                </div>
-            </div>
-    </section>
+    <div class="mx-auto max-w-7xl">
 
-    <!-- espaços e vivências -->
-    <section id="clubes" class="min-h-[calc(100vh-73px)] flex flex-col justify-center scroll-mt-[73px] bg-fundo px-5 py-20">
+        <div class="text-center">
+            <span class="text-sm font-bold uppercase tracking-wider text-laranja">
+                Formação profissional em Caiobá
+            </span>
 
-        <div class="mx-auto max-w-7xl">
+            <h2 class="mt-3 text-4xl font-black text-azul">
+                <?= textoSite(
+                    'curso_titulo',
+                    'Técnico em Informática para Internet'
+                ) ?>
+            </h2>
 
-            <div class="text-center">
+            <p class="mx-auto mt-4 max-w-3xl leading-7 text-slate-500">
+                Em Caiobá, esta é a formação técnica integrada ao Ensino Médio. O curso desenvolve
+                competências para criar e colocar aplicações para internet em funcionamento.
+            </p>
+        </div>
+
+        <div class="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+
+            <?php
+            $etapasCurso = [
+                ['Planejamento', 'Estruturar', 'Organizar a estrutura e os elementos necessários para aplicações web.'],
+                ['Desenvolvimento', 'Codificar', 'Desenvolver soluções para internet utilizando conhecimentos de programação.'],
+                ['Web', 'Publicar', 'Preparar e disponibilizar aplicações para uso em ambientes de internet.'],
+                ['Qualidade', 'Testar', 'Verificar o funcionamento das aplicações e identificar possíveis melhorias.']
+            ];
+            ?>
+
+            <?php foreach ($etapasCurso as $etapa): ?>
+                <article class="rounded-2xl bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
+                    <span class="text-xs font-bold uppercase tracking-wider text-laranja">
+                        <?= hSite($etapa[0]) ?>
+                    </span>
+
+                    <h3 class="mt-3 text-xl font-black text-azul">
+                        <?= hSite($etapa[1]) ?>
+                    </h3>
+
+                    <p class="mt-3 text-sm leading-6 text-slate-500">
+                        <?= hSite($etapa[2]) ?>
+                    </p>
+                </article>
+            <?php endforeach; ?>
+
+        </div>
+    </div>
+</section>
+
+<!-- PROJETOS -->
+<section id="feiras" class="flex min-h-[calc(100vh-73px)] scroll-mt-[73px] flex-col justify-center px-5 py-20">
+
+    <div class="mx-auto max-w-7xl">
+
+        <div class="grid items-center gap-12 lg:grid-cols-2">
+
+            <div>
                 <span class="text-sm font-bold uppercase tracking-wider text-laranja">
-                    Estrutura e vida escolar
+                    Projetos reais de Caiobá
                 </span>
 
                 <h2 class="mt-3 text-4xl font-black text-azul">
-                    Espaços para aprender além da sala de aula
-                </h2>
-
-                <p class="mx-auto mt-4 max-w-2xl text-slate-500">
-                    O programa conta com estrutura educacional e os estudantes também convivem com
-                    diferentes espaços e serviços da unidade Sesc Caiobá.
-                </p>
-            </div>
-
-            <div class="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
-
-                <div class="border-l-4 border-laranja bg-white p-7 shadow-sm">
-                    <h3 class="font-black text-azul">Clube de Literatura</h3>
-                    <p class="mt-3 text-sm leading-6 text-slate-500">
-                        Acesso a acervo físico e digital para estudo, pesquisa e leitura.
-                    </p>
-                </div>
-
-                <div class="border-l-4 border-laranja bg-white p-7 shadow-sm">
-                    <h3 class="font-black text-azul">Clube de Ciências</h3>
-                    <p class="mt-3 text-sm leading-6 text-slate-500">
-                        Ambiente de informática voltado às atividades e à formação técnica.
-                    </p>
-                </div>
-
-                <div class="border-l-4 border-laranja bg-white p-7 shadow-sm">
-                    <h3 class="font-black text-azul">Esportes</h3>
-                    <p class="mt-3 text-sm leading-6 text-slate-500">
-                        Prática de esportes como Futesal e Vòlei no ginásio.
-                    </p>
-                </div>
-
-                <div class="border-l-4 border-laranja bg-white p-7 shadow-sm">
-                    <h3 class="font-black text-azul">Cine Sereia</h3>
-                    <p class="mt-3 text-sm leading-6 text-slate-500">
-                        Espaço cultural da unidade Sesc Caiobá, ampliando o contato com arte e cultura.
-                    </p>
-                </div>
-
-            </div>
-        </div>
-    </section>
-
-
-    <!-- feedbacks anônimos -->
-    <section id="feedbacks" class="min-h-[calc(100vh-73px)] flex flex-col justify-center scroll-mt-[73px] bg-fundo px-5 py-20">
-
-        <div class="mx-auto w-full max-w-7xl">
-
-            <!-- título -->
-            <div class="max-w-3xl">
-
-                <span class="text-sm font-bold uppercase tracking-wider text-laranja">
-                    Voz dos estudantes
-                </span>
-
-                <h2 class="mt-3 text-4xl font-black leading-tight text-azul md:text-5xl">
-                    O que os estudantes estão dizendo
+                    <?= textoSite(
+                        'projetos_titulo',
+                        'Ciência, tecnologia e realidade local'
+                    ) ?>
                 </h2>
 
                 <p class="mt-5 leading-8 text-slate-500">
-                    Confira opiniões, sugestões e experiências compartilhadas pelos estudantes.
-                    Os feedbacks publicados são exibidos de forma anônima.
+                    Em 2025, estudantes do Sesc Senac Caiobá/Matinhos participaram de feiras e
+                    eventos científicos com trabalhos ligados à tecnologia, história, inclusão,
+                    meio ambiente e cultura regional.
                 </p>
 
+                <?php
+                $projetos = [
+                    [
+                        'Inovação e Inclusão',
+                        'Projeto de modelagem e impressão 3D para acessibilidade em museus, vencedor do 1º lugar em Tecnologia no Concurso Sementes do Futuro.'
+                    ],
+                    [
+                        'Terra Indígena Yanomami',
+                        'Pesquisa sobre os impactos do garimpo ilegal, reconhecida com Menção Honrosa da Funai na FECCI.'
+                    ],
+                    [
+                        'Arqueologia Digital',
+                        'Trabalho com modelagem e impressão 3D de zoólitos, conectado à história e ao patrimônio do litoral paranaense.'
+                    ],
+                    [
+                        'Cinema de Matinhos',
+                        'Pesquisa sobre a história do cinema na cidade, com registro de filmes, cartazes e entrevistas.'
+                    ]
+                ];
+                ?>
+
+                <div class="mt-7 space-y-4">
+                    <?php foreach ($projetos as $projeto): ?>
+                        <div class="border-l-4 border-laranja pl-4">
+                            <h3 class="font-bold text-azul">
+                                <?= hSite($projeto[0]) ?>
+                            </h3>
+                            <p class="mt-1 text-sm leading-6 text-slate-500">
+                                <?= hSite($projeto[1]) ?>
+                            </p>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
             </div>
 
+            <div class="grid grid-cols-2 gap-4">
+                <img
+                    src="<?= hSite(imagemSite('imagem_projetos_1', './img/feira-cientifica-sesc-senac.jpg')) ?>"
+                    alt="Participantes do Sesc Senac em evento científico"
+                    class="h-80 w-full rounded-2xl object-cover"
+                >
 
-            <!-- carrossel -->
-            <div class="relative mt-10">
+                <img
+                    src="<?= hSite(imagemSite('imagem_projetos_2', './img/sesc-senac-evento-cientifico.jpeg')) ?>"
+                    alt="Representantes do Sesc e Senac em evento científico"
+                    class="mt-10 h-80 w-full rounded-2xl object-cover"
+                >
+            </div>
 
-                <div id="feedbackViewport" class="overflow-hidden">
+        </div>
+    </div>
+</section>
 
-                    <div
-                        id="feedbackTrack"
-                        class="flex gap-4 transition-transform duration-500 ease-out"
-                    >
+<!-- ESPAÇOS ESCOLARES -->
+<section id="clubes" class="flex min-h-[calc(100vh-73px)] scroll-mt-[73px] flex-col justify-center bg-fundo px-5 py-20">
 
-                        <?php
-                        $feedbacks_carrossel = [];
+    <div class="mx-auto max-w-7xl">
 
-                        if (isset($resultado_feedbacks) && $resultado_feedbacks->num_rows > 0):
-                            while ($row = $resultado_feedbacks->fetch_assoc()):
-                                $feedbacks_carrossel[] = $row;
-                            endwhile;
-                        endif;
-                        ?>
+        <div class="text-center">
+            <span class="text-sm font-bold uppercase tracking-wider text-laranja">
+                Estrutura e vida escolar
+            </span>
 
-                        <?php if (count($feedbacks_carrossel) > 0): ?>
+            <h2 class="mt-3 text-4xl font-black text-azul">
+                <?= textoSite(
+                    'espacos_titulo',
+                    'Espaços para aprender além da sala de aula'
+                ) ?>
+            </h2>
 
-                            <?php foreach ($feedbacks_carrossel as $row): ?>
+            <p class="mx-auto mt-4 max-w-2xl text-slate-500">
+                O programa conta com estrutura educacional e os estudantes também convivem com
+                diferentes espaços e serviços da unidade Sesc Caiobá.
+            </p>
+        </div>
 
-                                <?php
-                                $data_formatada = date('d/m/Y H:i', strtotime($row['data_criacao']));
+        <div class="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
 
-                                $cor_tag = "bg-orange-100 text-laranjaEscuro";
+            <?php
+            $espacos = [
+                ['Clube de Literatura', 'Acesso a acervo físico e digital para estudo, pesquisa e leitura.'],
+                ['Clube de Ciências', 'Ambiente de informática voltado às atividades e à formação técnica.'],
+                ['Esportes', 'Prática de esportes como futsal e vôlei no ginásio.'],
+                ['Cine Sereia', 'Espaço cultural da unidade Sesc Caiobá, ampliando o contato com arte e cultura.']
+            ];
+            ?>
 
-                                if ($row['categoria'] === 'Ensino') {
-                                    $cor_tag = "bg-blue-50 text-azul";
-                                } elseif ($row['categoria'] === 'Estrutura') {
-                                    $cor_tag = "bg-emerald-50 text-emerald-700";
-                                }
-                                ?>
+            <?php foreach ($espacos as $espaco): ?>
+                <div class="border-l-4 border-laranja bg-white p-7 shadow-sm">
+                    <h3 class="font-black text-azul">
+                        <?= hSite($espaco[0]) ?>
+                    </h3>
 
-                                <article
-                                    class="feedback-card min-w-0 flex-[0_0_100%] rounded-2xl border border-slate-200 border-t-4 border-t-laranja bg-white p-7 text-slate-700 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg sm:flex-[0_0_calc(50%-0.5rem)] xl:flex-[0_0_calc(25%-0.75rem)]"
-                                >
+                    <p class="mt-3 text-sm leading-6 text-slate-500">
+                        <?= hSite($espaco[1]) ?>
+                    </p>
+                </div>
+            <?php endforeach; ?>
 
-                                    <div class="flex h-full min-h-[310px] flex-col">
+        </div>
+    </div>
+</section>
 
-                                        <div class="flex items-center justify-between gap-3">
+<!-- FEEDBACKS -->
+<section id="feedbacks" class="flex min-h-[calc(100vh-73px)] scroll-mt-[73px] flex-col justify-center bg-fundo px-5 py-20">
 
-                                            <span class="rounded-full px-3 py-1 text-xs font-bold <?php echo $cor_tag; ?>">
-                                                <?php echo htmlspecialchars($row['categoria']); ?>
-                                            </span>
+    <div class="mx-auto w-full max-w-7xl">
 
-                                            <span class="text-xs font-medium text-slate-400">
-                                                Anônimo
-                                            </span>
+        <div class="max-w-3xl">
+            <span class="text-sm font-bold uppercase tracking-wider text-laranja">
+                Voz dos estudantes
+            </span>
 
-                                        </div>
+            <h2 class="mt-3 text-4xl font-black leading-tight text-azul md:text-5xl">
+                O que os estudantes estão dizendo
+            </h2>
 
-                                        <h3 class="mt-7 text-xl font-black text-azul">
-                                            <?php echo htmlspecialchars($row['titulo']); ?>
-                                        </h3>
+            <p class="mt-5 leading-8 text-slate-500">
+                Confira opiniões, sugestões e experiências compartilhadas pelos estudantes.
+                Os feedbacks publicados são exibidos de forma anônima.
+            </p>
+        </div>
 
-                                        <p class="mt-4 flex-1 leading-7 text-slate-600 whitespace-pre-line">
-                                            <?php echo htmlspecialchars($row['texto']); ?>
-                                        </p>
+        <div class="relative mt-10">
 
-                                        <div class="mt-6 border-t border-slate-100 pt-4 text-xs font-semibold text-slate-400">
-                                            Comunidade escolar • <?php echo $data_formatada; ?>
-                                        </div>
+            <div id="feedbackViewport" class="overflow-hidden">
+                <div id="feedbackTrack" class="flex gap-4 transition-transform duration-500 ease-out">
 
+                    <?php if (count($feedbacksCarrossel) > 0): ?>
+
+                        <?php foreach ($feedbacksCarrossel as $row): ?>
+
+                            <?php
+                            $dataFormatada = date(
+                                'd/m/Y H:i',
+                                strtotime($row['data_criacao'])
+                            );
+
+                            $corTag = 'bg-orange-100 text-laranjaEscuro';
+
+                            if ($row['categoria'] === 'Ensino') {
+                                $corTag = 'bg-blue-50 text-azul';
+                            } elseif ($row['categoria'] === 'Estrutura') {
+                                $corTag = 'bg-emerald-50 text-emerald-700';
+                            }
+                            ?>
+
+                            <article class="feedback-card min-w-0 flex-[0_0_100%] rounded-2xl border border-slate-200 border-t-4 border-t-laranja bg-white p-7 text-slate-700 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg sm:flex-[0_0_calc(50%-0.5rem)] xl:flex-[0_0_calc(25%-0.75rem)]">
+
+                                <div class="flex h-full min-h-[310px] flex-col">
+
+                                    <div class="flex items-center justify-between gap-3">
+                                        <span class="rounded-full px-3 py-1 text-xs font-bold <?= $corTag ?>">
+                                            <?= hSite($row['categoria']) ?>
+                                        </span>
+
+                                        <span class="text-xs font-medium text-slate-400">
+                                            Anônimo
+                                        </span>
                                     </div>
 
-                                </article>
+                                    <h3 class="mt-7 text-xl font-black text-azul">
+                                        <?= hSite($row['titulo']) ?>
+                                    </h3>
 
-                            <?php endforeach; ?>
+                                    <p class="mt-4 flex-1 whitespace-pre-line leading-7 text-slate-600">
+                                        <?= hSite($row['texto']) ?>
+                                    </p>
 
-                        <?php else: ?>
+                                    <div class="mt-6 border-t border-slate-100 pt-4 text-xs font-semibold text-slate-400">
+                                        Comunidade escolar • <?= hSite($dataFormatada) ?>
+                                    </div>
 
-                            <article class="w-full rounded-2xl border border-dashed border-slate-200 bg-fundo p-10 text-center">
-                                <p class="text-sm italic text-slate-400">
-                                    Nenhum feedback publicado ainda. Seja o primeiro a compartilhar sua experiência!
-                                </p>
+                                </div>
                             </article>
 
-                        <?php endif; ?>
+                        <?php endforeach; ?>
 
-                    </div>
+                    <?php else: ?>
+
+                        <article class="w-full rounded-2xl border border-dashed border-slate-200 bg-white p-10 text-center">
+                            <p class="text-sm italic text-slate-400">
+                                Nenhum feedback publicado ainda. Seja o primeiro a compartilhar sua experiência!
+                            </p>
+                        </article>
+
+                    <?php endif; ?>
 
                 </div>
+            </div>
 
-
-                <!-- controles -->
-                <?php if (count($feedbacks_carrossel) > 1): ?>
-
-                    <div
-                        id="controlesFeedback"
-                        class="mt-7 flex items-center justify-end gap-3"
-                    >
-
-                        <button
-                            type="button"
-                            id="feedbackAnterior"
-                            aria-label="Feedback anterior"
-                            class="grid h-11 w-11 place-items-center rounded-full border border-slate-200 bg-white text-xl text-azul shadow-sm transition hover:border-laranja hover:bg-orange-50 hover:text-laranja"
-                        >
-                            &#10094;
-                        </button>
-
-                        <button
-                            type="button"
-                            id="feedbackProximo"
-                            aria-label="Próximo feedback"
-                            class="grid h-11 w-11 place-items-center rounded-full bg-azul text-xl text-white shadow-sm transition hover:bg-azul2"
-                        >
-                            &#10095;
-                        </button>
-
-                    </div>
-
-                <?php endif; ?>
-
-
-                <!-- botão para adicionar feedback -->
-                <div class="mt-8 flex justify-center">
+            <?php if (count($feedbacksCarrossel) > 1): ?>
+                <div id="controlesFeedback" class="mt-7 flex items-center justify-end gap-3">
 
                     <button
                         type="button"
-                        id="abrirFormularioFeedback"
-                        class="inline-flex items-center gap-3 rounded-xl bg-laranja px-7 py-4 font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-laranjaEscuro hover:shadow-lg"
+                        id="feedbackAnterior"
+                        aria-label="Feedback anterior"
+                        class="grid h-11 w-11 place-items-center rounded-full border border-slate-200 bg-white text-xl text-azul shadow-sm transition hover:border-laranja hover:bg-orange-50 hover:text-laranja"
                     >
-                        Adicionar feedback
-
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke-width="2"
-                            stroke="currentColor"
-                            class="h-5 w-5"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M12 4.5v15m7.5-7.5h-15"
-                            />
-                        </svg>
-
+                        <i class="bi bi-chevron-left"></i>
                     </button>
-
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <!-- modal do formulário de feedback -->
-        <div
-            id="modalFeedback"
-            class="fixed inset-0 z-[100] hidden items-center justify-center bg-azul/50 px-5 py-8 backdrop-blur-sm"
-        >
-
-            <div
-                id="caixaFeedback"
-                class="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-fundo p-6 shadow-2xl md:p-8"
-            >
-
-                <!-- fechar -->
-                <button
-                    type="button"
-                    id="fecharFormularioFeedback"
-                    aria-label="Fechar formulário"
-                    class="absolute right-5 top-5 grid h-10 w-10 place-items-center rounded-full text-2xl text-slate-400 transition hover:bg-white hover:text-azul"
-                >
-                    &times;
-                </button>
-
-
-                <div class="pr-10">
-
-                    <span class="text-xs font-bold uppercase tracking-[0.18em] text-laranja">
-                        Voz dos estudantes
-                    </span>
-
-                    <h3 class="mt-2 text-3xl font-black text-azul">
-                        Envie seu feedback
-                    </h3>
-
-                    <p class="mt-2 text-sm leading-6 text-slate-500">
-                        Compartilhe uma opinião, sugestão ou experiência sobre a escola.
-                    </p>
-
-                </div>
-
-
-                <form action="index.php" method="POST" class="mt-7">
-
-                    <div>
-
-                        <label for="feedback-titulo" class="text-sm font-bold text-azul">
-                            Título do feedback
-                        </label>
-
-                        <input
-                            id="feedback-titulo"
-                            name="titulo"
-                            type="text"
-                            maxlength="70"
-                            required
-                            placeholder="Ex.: Uma sugestão para os intervalos"
-                            class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-laranja focus:ring-4 focus:ring-orange-100"
-                        >
-
-                    </div>
-
-
-                    <div class="mt-5">
-
-                        <label for="feedback-categoria" class="text-sm font-bold text-azul">
-                            Categoria
-                        </label>
-
-                        <select
-                            id="feedback-categoria"
-                            name="categoria"
-                            required
-                            class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-laranja focus:ring-4 focus:ring-orange-100"
-                        >
-                            <option value="Ensino">Ensino</option>
-                            <option value="Estrutura">Estrutura</option>
-                            <option value="Projetos">Projetos</option>
-                            <option value="Convivência">Convivência</option>
-                            <option value="Sugestão">Sugestão</option>
-                        </select>
-
-                    </div>
-
-
-                    <div class="mt-5">
-
-                        <label for="feedback-texto" class="text-sm font-bold text-azul">
-                            Seu feedback
-                        </label>
-
-                        <textarea
-                            id="feedback-texto"
-                            name="texto"
-                            rows="5"
-                            maxlength="500"
-                            required
-                            placeholder="Escreva sua opinião, sugestão ou experiência..."
-                            class="mt-2 w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 outline-none transition focus:border-laranja focus:ring-4 focus:ring-orange-100"
-                        ></textarea>
-
-                    </div>
-
-
-                    <div class="mt-5 flex items-start gap-3 rounded-xl bg-white p-4">
-
-                        <div class="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-orange-100 text-laranja">
-
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke-width="1.5"
-                                stroke="currentColor"
-                                class="h-6 w-6"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0-2.25-2.25Z"
-                                />
-                            </svg>
-
-                        </div>
-
-                        <p class="text-xs leading-5 text-slate-500">
-                            Sua identidade não será exibida junto ao feedback. Evite colocar dados pessoais na mensagem.
-                        </p>
-
-                    </div>
-
 
                     <button
-                        type="submit"
-                        class="mt-6 w-full rounded-xl bg-azul px-6 py-3.5 font-bold text-white transition hover:bg-azul2"
+                        type="button"
+                        id="feedbackProximo"
+                        aria-label="Próximo feedback"
+                        class="grid h-11 w-11 place-items-center rounded-full bg-azul text-xl text-white shadow-sm transition hover:bg-azul2"
                     >
-                        Enviar feedback anônimo
+                        <i class="bi bi-chevron-right"></i>
                     </button>
 
-                </form>
+                </div>
+            <?php endif; ?>
 
+            <div class="mt-8 flex justify-center">
+                <button
+                    type="button"
+                    id="abrirFormularioFeedback"
+                    class="inline-flex items-center gap-3 rounded-xl bg-laranja px-7 py-4 font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-laranjaEscuro hover:shadow-lg"
+                >
+                    Adicionar feedback
+                    <i class="bi bi-plus-lg text-xl"></i>
+                </button>
             </div>
 
-        </div>
-
-    </section>
-
-    <?php include './includes/footer.php'; ?>
-
-
-    <!-- libras -->
-    <div vw class="enabled">
-        <div vw-access-button class="active"></div>
-        <div vw-plugin-wrapper>
-            <div class="vw-plugin-top-wrapper"></div>
         </div>
     </div>
 
-    <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
-    <script src="./js/libras.js"></script>
+    <!-- MODAL -->
+    <div
+        id="modalFeedback"
+        class="fixed inset-0 z-[100] hidden items-center justify-center bg-azul/50 px-5 py-8 backdrop-blur-sm"
+    >
+        <div
+            id="caixaFeedback"
+            class="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-fundo p-6 shadow-2xl md:p-8"
+        >
 
+            <button
+                type="button"
+                id="fecharFormularioFeedback"
+                aria-label="Fechar formulário"
+                class="absolute right-5 top-5 grid h-10 w-10 place-items-center rounded-full text-2xl text-slate-400 transition hover:bg-white hover:text-azul"
+            >
+                <i class="bi bi-x-lg"></i>
+            </button>
 
-    <!-- carrossel dos feedbacks -->
-    <script>
-        const feedbackViewport = document.getElementById('feedbackViewport');
-        const feedbackTrack = document.getElementById('feedbackTrack');
-        const feedbackCards = document.querySelectorAll('.feedback-card');
-        const feedbackAnterior = document.getElementById('feedbackAnterior');
-        const feedbackProximo = document.getElementById('feedbackProximo');
+            <div class="pr-10">
+                <span class="text-xs font-bold uppercase tracking-[0.18em] text-laranja">
+                    Voz dos estudantes
+                </span>
 
-        let feedbackAtual = 0;
-        let feedbackAutoplay = null;
+                <h3 class="mt-2 text-3xl font-black text-azul">
+                    Envie seu feedback
+                </h3>
 
-        function quantidadeVisivel() {
-            if (window.innerWidth >= 1280) return 4;
-            if (window.innerWidth >= 640) return 2;
-            return 1;
-        }
+                <p class="mt-2 text-sm leading-6 text-slate-500">
+                    Compartilhe uma opinião, sugestão ou experiência sobre a escola.
+                </p>
+            </div>
 
-        function atualizarControles() {
-            const controles = document.getElementById('controlesFeedback');
+            <form action="index.php" method="POST" class="mt-7">
 
-            if (!controles) return;
+                <div>
+                    <label for="feedback-titulo" class="text-sm font-bold text-azul">
+                        Título do feedback
+                    </label>
 
-            const visiveis = quantidadeVisivel();
-            const precisaNavegar = feedbackCards.length > visiveis;
+                    <input
+                        id="feedback-titulo"
+                        name="titulo"
+                        type="text"
+                        maxlength="70"
+                        required
+                        placeholder="Ex.: Uma sugestão para os intervalos"
+                        class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-laranja focus:ring-4 focus:ring-orange-100"
+                    >
+                </div>
 
-            controles.classList.toggle('hidden', !precisaNavegar);
-        }
+                <div class="mt-5">
+                    <label for="feedback-categoria" class="text-sm font-bold text-azul">
+                        Categoria
+                    </label>
 
-        function atualizarCarrossel() {
-            if (!feedbackTrack || !feedbackCards.length) {
-                atualizarControles();
-                return;
-            }
+                    <select
+                        id="feedback-categoria"
+                        name="categoria"
+                        required
+                        class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-laranja focus:ring-4 focus:ring-orange-100"
+                    >
+                        <option value="Ensino">Ensino</option>
+                        <option value="Estrutura">Estrutura</option>
+                        <option value="Projetos">Projetos</option>
+                        <option value="Convivência">Convivência</option>
+                        <option value="Sugestão">Sugestão</option>
+                    </select>
+                </div>
 
-            const visiveis = quantidadeVisivel();
-            const ultimoIndice = Math.max(0, feedbackCards.length - visiveis);
+                <div class="mt-5">
+                    <label for="feedback-texto" class="text-sm font-bold text-azul">
+                        Seu feedback
+                    </label>
 
-            if (feedbackAtual > ultimoIndice) {
-                feedbackAtual = ultimoIndice;
-            }
+                    <textarea
+                        id="feedback-texto"
+                        name="texto"
+                        rows="5"
+                        maxlength="500"
+                        required
+                        placeholder="Escreva sua opinião, sugestão ou experiência..."
+                        class="mt-2 w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 outline-none transition focus:border-laranja focus:ring-4 focus:ring-orange-100"
+                    ></textarea>
+                </div>
 
-            const larguraCard = feedbackCards[0].getBoundingClientRect().width;
-            const estiloTrack = window.getComputedStyle(feedbackTrack);
-            const espacamento = parseFloat(estiloTrack.columnGap || estiloTrack.gap) || 0;
-            const deslocamento = feedbackAtual * (larguraCard + espacamento);
+                <div class="mt-5 flex items-start gap-3 rounded-xl bg-white p-4">
+                    <div class="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-orange-100 text-laranja">
+                        <i class="bi bi-shield-lock text-lg"></i>
+                    </div>
 
-            feedbackTrack.style.transform = `translateX(-${deslocamento}px)`;
+                    <p class="text-xs leading-5 text-slate-500">
+                        Sua identidade não será exibida junto ao feedback. Evite colocar dados pessoais na mensagem.
+                    </p>
+                </div>
 
+                <button
+                    type="submit"
+                    class="mt-6 w-full rounded-xl bg-azul px-6 py-3.5 font-bold text-white transition hover:bg-azul2"
+                >
+                    Enviar feedback anônimo
+                </button>
+
+            </form>
+        </div>
+    </div>
+</section>
+
+<?php include './includes/footer.php'; ?>
+
+<!-- VLibras -->
+<div vw class="enabled">
+    <div vw-access-button class="active"></div>
+    <div vw-plugin-wrapper>
+        <div class="vw-plugin-top-wrapper"></div>
+    </div>
+</div>
+
+<script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+<script src="./js/libras.js"></script>
+
+<!-- CARROSSEL DOS FEEDBACKS E MODAL -->
+<script>
+    const feedbackViewport = document.getElementById('feedbackViewport');
+    const feedbackTrack = document.getElementById('feedbackTrack');
+    const feedbackCards = document.querySelectorAll('.feedback-card');
+    const feedbackAnterior = document.getElementById('feedbackAnterior');
+    const feedbackProximo = document.getElementById('feedbackProximo');
+
+    let feedbackAtual = 0;
+    let feedbackAutoplay = null;
+
+    function quantidadeVisivel() {
+        if (window.innerWidth >= 1280) return 4;
+        if (window.innerWidth >= 640) return 2;
+        return 1;
+    }
+
+    function atualizarControles() {
+        const controles = document.getElementById('controlesFeedback');
+
+        if (!controles) return;
+
+        controles.classList.toggle(
+            'hidden',
+            feedbackCards.length <= quantidadeVisivel()
+        );
+    }
+
+    function atualizarCarrossel() {
+        if (!feedbackTrack || feedbackCards.length === 0) {
             atualizarControles();
+            return;
         }
 
-        function proximoFeedback() {
-            const visiveis = quantidadeVisivel();
-            const ultimoIndice = Math.max(0, feedbackCards.length - visiveis);
+        const visiveis = quantidadeVisivel();
+        const ultimoIndice = Math.max(0, feedbackCards.length - visiveis);
 
-            if (feedbackAtual >= ultimoIndice) {
-                feedbackAtual = 0;
-            } else {
-                feedbackAtual++;
-            }
+        feedbackAtual = Math.min(feedbackAtual, ultimoIndice);
 
-            atualizarCarrossel();
-        }
+        const larguraCard = feedbackCards[0].getBoundingClientRect().width;
+        const estilo = window.getComputedStyle(feedbackTrack);
+        const espacamento = parseFloat(estilo.columnGap || estilo.gap) || 0;
 
-        function feedbackAnteriorAcao() {
-            const visiveis = quantidadeVisivel();
-            const ultimoIndice = Math.max(0, feedbackCards.length - visiveis);
+        feedbackTrack.style.transform =
+            `translateX(-${feedbackAtual * (larguraCard + espacamento)}px)`;
 
-            if (feedbackAtual <= 0) {
-                feedbackAtual = ultimoIndice;
-            } else {
-                feedbackAtual--;
-            }
+        atualizarControles();
+    }
 
-            atualizarCarrossel();
-        }
+    function proximoFeedback() {
+        const ultimoIndice = Math.max(
+            0,
+            feedbackCards.length - quantidadeVisivel()
+        );
 
-        function iniciarFeedbackAutoplay() {
-            clearInterval(feedbackAutoplay);
-
-            if (feedbackCards.length <= quantidadeVisivel()) return;
-
-            feedbackAutoplay = setInterval(proximoFeedback, 5000);
-        }
-
-        if (feedbackAnterior) {
-            feedbackAnterior.addEventListener('click', () => {
-                feedbackAnteriorAcao();
-                iniciarFeedbackAutoplay();
-            });
-        }
-
-        if (feedbackProximo) {
-            feedbackProximo.addEventListener('click', () => {
-                proximoFeedback();
-                iniciarFeedbackAutoplay();
-            });
-        }
-
-        window.addEventListener('resize', () => {
-            atualizarCarrossel();
-            iniciarFeedbackAutoplay();
-        });
-
-        // O carrossel passa sozinho e pausa quando o mouse fica sobre os cards.
-        if (feedbackViewport) {
-            feedbackViewport.addEventListener('mouseenter', () => {
-                clearInterval(feedbackAutoplay);
-            });
-
-            feedbackViewport.addEventListener('mouseleave', () => {
-                iniciarFeedbackAutoplay();
-            });
-        }
+        feedbackAtual = feedbackAtual >= ultimoIndice
+            ? 0
+            : feedbackAtual + 1;
 
         atualizarCarrossel();
+    }
+
+    function feedbackAnteriorAcao() {
+        const ultimoIndice = Math.max(
+            0,
+            feedbackCards.length - quantidadeVisivel()
+        );
+
+        feedbackAtual = feedbackAtual <= 0
+            ? ultimoIndice
+            : feedbackAtual - 1;
+
+        atualizarCarrossel();
+    }
+
+    function iniciarFeedbackAutoplay() {
+        clearInterval(feedbackAutoplay);
+
+        if (feedbackCards.length <= quantidadeVisivel()) return;
+
+        feedbackAutoplay = setInterval(proximoFeedback, 5000);
+    }
+
+    feedbackAnterior?.addEventListener('click', () => {
+        feedbackAnteriorAcao();
         iniciarFeedbackAutoplay();
+    });
 
+    feedbackProximo?.addEventListener('click', () => {
+        proximoFeedback();
+        iniciarFeedbackAutoplay();
+    });
 
-        // modal do formulário
-        const modalFeedback = document.getElementById('modalFeedback');
-        const abrirFormularioFeedback = document.getElementById('abrirFormularioFeedback');
-        const fecharFormularioFeedback = document.getElementById('fecharFormularioFeedback');
+    window.addEventListener('resize', () => {
+        atualizarCarrossel();
+        iniciarFeedbackAutoplay();
+    });
 
-        function abrirFormulario() {
-            if (!modalFeedback) return;
+    feedbackViewport?.addEventListener('mouseenter', () => {
+        clearInterval(feedbackAutoplay);
+    });
 
-            modalFeedback.classList.remove('hidden');
-            modalFeedback.classList.add('flex');
-            document.body.classList.add('overflow-hidden');
+    feedbackViewport?.addEventListener('mouseleave', iniciarFeedbackAutoplay);
+
+    atualizarCarrossel();
+    iniciarFeedbackAutoplay();
+
+    // Modal do formulário
+    const modalFeedback = document.getElementById('modalFeedback');
+    const abrirFormularioFeedback = document.getElementById('abrirFormularioFeedback');
+    const fecharFormularioFeedback = document.getElementById('fecharFormularioFeedback');
+
+    function abrirFormulario() {
+        modalFeedback.classList.remove('hidden');
+        modalFeedback.classList.add('flex');
+        document.body.classList.add('overflow-hidden');
+    }
+
+    function fecharFormulario() {
+        modalFeedback.classList.add('hidden');
+        modalFeedback.classList.remove('flex');
+        document.body.classList.remove('overflow-hidden');
+    }
+
+    abrirFormularioFeedback?.addEventListener('click', abrirFormulario);
+    fecharFormularioFeedback?.addEventListener('click', fecharFormulario);
+
+    modalFeedback?.addEventListener('click', (event) => {
+        if (event.target === modalFeedback) {
+            fecharFormulario();
         }
+    });
 
-        function fecharFormulario() {
-            if (!modalFeedback) return;
-
-            modalFeedback.classList.add('hidden');
-            modalFeedback.classList.remove('flex');
-            document.body.classList.remove('overflow-hidden');
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !modalFeedback.classList.contains('hidden')) {
+            fecharFormulario();
         }
+    });
+</script>
 
-        if (abrirFormularioFeedback) {
-            abrirFormularioFeedback.addEventListener('click', abrirFormulario);
-        }
+<!-- CARROSSEL DA ESCOLA -->
+<script>
+    const carousel = document.getElementById('carousel-escola');
 
-        if (fecharFormularioFeedback) {
-            fecharFormularioFeedback.addEventListener('click', fecharFormulario);
-        }
-
-        if (modalFeedback) {
-            modalFeedback.addEventListener('click', (event) => {
-                if (event.target === modalFeedback) {
-                    fecharFormulario();
-                }
-            });
-        }
-
-        document.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape' && modalFeedback && !modalFeedback.classList.contains('hidden')) {
-                fecharFormulario();
-            }
-        });
-    </script>
-
-    <!-- carrossel da seção sobre -->
-    <script>
-        const carousel = document.getElementById('carousel-escola');
+    if (carousel) {
         const slides = carousel.querySelectorAll('.carousel-slide');
         const dots = carousel.querySelectorAll('.carousel-dot');
         const prevButton = document.getElementById('carousel-prev');
         const nextButton = document.getElementById('carousel-next');
 
         let slideAtual = 0;
-        let autoplay;
+        let autoplay = null;
 
         function mostrarSlide(indice) {
             slideAtual = (indice + slides.length) % slides.length;
@@ -1052,28 +1092,24 @@ $resultado_feedbacks = $conexao->query("SELECT * FROM feedbacks WHERE status = '
         }
 
         function iniciarAutoplay() {
+            clearInterval(autoplay);
             autoplay = setInterval(() => mostrarSlide(slideAtual + 1), 4500);
         }
 
-        function reiniciarAutoplay() {
-            clearInterval(autoplay);
-            iniciarAutoplay();
-        }
-
-        prevButton.addEventListener('click', () => {
+        prevButton?.addEventListener('click', () => {
             mostrarSlide(slideAtual - 1);
-            reiniciarAutoplay();
+            iniciarAutoplay();
         });
 
-        nextButton.addEventListener('click', () => {
+        nextButton?.addEventListener('click', () => {
             mostrarSlide(slideAtual + 1);
-            reiniciarAutoplay();
+            iniciarAutoplay();
         });
 
         dots.forEach((dot, i) => {
             dot.addEventListener('click', () => {
                 mostrarSlide(i);
-                reiniciarAutoplay();
+                iniciarAutoplay();
             });
         });
 
@@ -1081,8 +1117,8 @@ $resultado_feedbacks = $conexao->query("SELECT * FROM feedbacks WHERE status = '
         carousel.addEventListener('mouseleave', iniciarAutoplay);
 
         iniciarAutoplay();
-    </script>
+    }
+</script>
 
 </body>
-
-</html> 
+</html>
