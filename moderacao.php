@@ -127,7 +127,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // ==================================================
         // RECUSAR
         // ==================================================
-
+        }
         if ($acao === 'recusar') {
 
             $stmt = $conexao->prepare(
@@ -1107,4 +1107,4 @@ $resultadoFeedbacks = $stmt->get_result();
 $stmt->close();
 $conexao->close();
 
-?>
+    ?>
